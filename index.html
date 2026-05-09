@@ -1,0 +1,760 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  LayoutDashboard, 
+  Package, 
+  ShoppingCart, 
+  Users, 
+  Wallet, 
+  Store, 
+  BarChart3, 
+  Settings, 
+  Plus, 
+  Search, 
+  Bell, 
+  Sun, 
+  Moon, 
+  MoreVertical, 
+  Filter, 
+  Download, 
+  ArrowUpRight, 
+  ArrowDownLeft, 
+  Truck, 
+  AlertTriangle,
+  LogOut,
+  ChevronRight,
+  Database,
+  Layers,
+  Smartphone,
+  CreditCard,
+  FileText,
+  FileDown
+} from 'lucide-react';
+import { 
+  LineChart, 
+  Line, 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  BarChart, 
+  Bar,
+  Cell,
+  PieChart,
+  Pie
+} from 'recharts';
+
+// --- Mock Data ---
+const MOCK_STATS = [
+  { label: 'Total Omzet', value: 'Rp 128.450.000', change: '+12.5%', trend: 'up', color: 'blue' },
+  { label: 'Total Order', value: '1,240', change: '+8.2%', trend: 'up', color: 'gold' },
+  { label: 'Total Profit', value: 'Rp 45.200.000', change: '+5.4%', trend: 'up', color: 'green' },
+  { label: 'Produk Aktif', value: '450', change: '-2', trend: 'down', color: 'black' },
+];
+
+const SALES_DATA = [
+  { name: 'Sen', sales: 4000, profit: 2400 },
+  { name: 'Sel', sales: 3000, profit: 1398 },
+  { name: 'Rab', sales: 2000, profit: 9800 },
+  { name: 'Kam', sales: 2780, profit: 3908 },
+  { name: 'Jum', sales: 1890, profit: 4800 },
+  { name: 'Sab', sales: 2390, profit: 3800 },
+  { name: 'Min', sales: 3490, profit: 4300 },
+];
+
+const RECENT_ORDERS = [
+  { id: 'ORD-001', customer: 'Budi Santoso', product: 'Sepatu Running Pro', status: 'Selesai', amount: 'Rp 850.000', date: '2 Menit yang lalu' },
+  { id: 'ORD-002', customer: 'Siti Aminah', product: 'T-Shirt Cotton Combed', status: 'Diproses', amount: 'Rp 125.000', date: '15 Menit yang lalu' },
+  { id: 'ORD-003', customer: 'Andi Wijaya', product: 'Jaket Waterproof', status: 'Dikirim', amount: 'Rp 450.000', date: '1 Jam yang lalu' },
+  { id: 'ORD-004', customer: 'Rina Kartika', product: 'Celana Chino Slim', status: 'Pending', amount: 'Rp 210.000', date: '2 Jam yang lalu' },
+];
+
+const PRODUCT_DATA = [
+  { id: 1, sku: 'SKU-SH-001', name: 'Sepatu Running Pro', stock: 12, category: 'Fashion', price: 'Rp 850.000', status: 'Aktif' },
+  { id: 2, sku: 'SKU-TS-023', name: 'T-Shirt Cotton Combed', stock: 5, category: 'Fashion', price: 'Rp 125.000', status: 'Stok Tipis' },
+  { id: 3, sku: 'SKU-JK-009', name: 'Jaket Waterproof', stock: 45, category: 'Outdoor', price: 'Rp 450.000', status: 'Aktif' },
+  { id: 4, sku: 'SKU-CH-012', name: 'Celana Chino Slim', stock: 0, category: 'Fashion', price: 'Rp 210.000', status: 'Habis' },
+];
+
+// --- Components ---
+
+const SidebarItem = ({ icon: Icon, label, active, onClick, badge, subItems }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="w-full">
+      <button
+        onClick={() => {
+          if (subItems) setIsOpen(!isOpen);
+          onClick();
+        }}
+        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 group ${
+          active 
+            ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' 
+            : 'text-slate-500 hover:bg-slate-50 hover:text-blue-600'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <Icon size={20} className={active ? 'text-white' : 'group-hover:text-blue-600'} />
+          <span className="font-medium text-sm">{label}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {badge && (
+            <span className={`text-[10px] px-2 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-600'}`}>
+              {badge}
+            </span>
+          )}
+          {subItems && (
+            <ChevronRight size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-90' : ''}`} />
+          )}
+        </div>
+      </button>
+      
+      {subItems && isOpen && (
+        <div className="ml-9 mt-1 space-y-1">
+          {subItems.map((sub, idx) => (
+            <button
+              key={idx}
+              className="w-full text-left px-4 py-2 text-xs text-slate-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              {sub}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const StatCard = ({ label, value, change, trend, color }) => {
+  const isUp = trend === 'up';
+  
+  const colors = {
+    blue: 'border-l-blue-500 text-blue-600',
+    gold: 'border-l-amber-500 text-amber-600',
+    green: 'border-l-emerald-500 text-emerald-600',
+    black: 'border-l-slate-800 text-slate-800',
+  };
+
+  return (
+    <div className={`bg-white p-6 rounded-2xl shadow-sm border border-slate-100 border-l-4 ${colors[color]} hover:shadow-md transition-shadow`}>
+      <p className="text-slate-400 text-xs font-medium uppercase tracking-wider mb-2">{label}</p>
+      <h3 className="text-2xl font-bold text-slate-800 mb-2">{value}</h3>
+      <div className="flex items-center gap-2">
+        <span className={`flex items-center text-xs font-bold ${isUp ? 'text-emerald-500' : 'text-rose-500'}`}>
+          {isUp ? <ArrowUpRight size={14} /> : <ArrowDownLeft size={14} />}
+          {change}
+        </span>
+        <span className="text-slate-400 text-[10px]">vs bulan lalu</span>
+      </div>
+    </div>
+  );
+};
+
+const DashboardView = () => (
+  <div className="space-y-6 animate-in fade-in duration-500">
+    {/* Stats Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {MOCK_STATS.map((stat, i) => <StatCard key={i} {...stat} />)}
+    </div>
+
+    {/* Charts Row */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="font-bold text-slate-800">Analisis Penjualan & Profit</h3>
+            <p className="text-xs text-slate-400">Data performa 7 hari terakhir</p>
+          </div>
+          <div className="flex gap-2">
+            <button className="px-3 py-1.5 text-xs font-medium bg-slate-50 text-slate-500 rounded-lg hover:bg-slate-100">Harian</button>
+            <button className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg shadow-sm">Mingguan</button>
+          </div>
+        </div>
+        <div className="h-[300px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={SALES_DATA}>
+              <defs>
+                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.1}/>
+                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+              <YAxis axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#94a3b8'}} />
+              <Tooltip 
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              />
+              <Area type="monotone" dataKey="sales" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
+              <Area type="monotone" dataKey="profit" stroke="#d97706" strokeWidth={3} fill="transparent" strokeDasharray="5 5" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <h3 className="font-bold text-slate-800 mb-6">Penjualan per Channel</h3>
+        <div className="h-[250px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={[
+                  { name: 'Shopee', value: 400 },
+                  { name: 'Tokopedia', value: 300 },
+                  { name: 'TikTok', value: 300 },
+                  { name: 'WhatsApp', value: 200 },
+                ]}
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                <Cell fill="#ee4d2d" />
+                <Cell fill="#00aa5b" />
+                <Cell fill="#000000" />
+                <Cell fill="#2563eb" />
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="space-y-3 mt-4">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#ee4d2d]"></div> Shopee</span>
+            <span className="font-bold">40%</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#00aa5b]"></div> Tokopedia</span>
+            <span className="font-bold">30%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Recent Activities & Inventory Alert */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-50 flex justify-between items-center">
+          <h3 className="font-bold text-slate-800">Pesanan Terbaru</h3>
+          <button className="text-blue-600 text-xs font-semibold hover:underline">Lihat Semua</button>
+        </div>
+        <div className="divide-y divide-slate-50">
+          {RECENT_ORDERS.map((order, i) => (
+            <div key={i} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <ShoppingCart size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-800">{order.customer}</p>
+                  <p className="text-xs text-slate-400">{order.product}</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold text-slate-800">{order.amount}</p>
+                <p className="text-[10px] text-slate-400 uppercase">{order.date}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-50 flex justify-between items-center">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <AlertTriangle size={18} className="text-amber-500" />
+            Notifikasi Stok
+          </h3>
+        </div>
+        <div className="p-6">
+          <div className="space-y-4">
+            <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-amber-800">T-Shirt Cotton Combed</p>
+                <p className="text-xs text-amber-600">Sisa Stok: 5 Unit</p>
+              </div>
+              <button className="px-4 py-2 bg-amber-600 text-white text-xs rounded-lg font-bold">Restock</button>
+            </div>
+            <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-rose-800">Celana Chino Slim</p>
+                <p className="text-xs text-rose-600">Stok Habis</p>
+              </div>
+              <button className="px-4 py-2 bg-rose-600 text-white text-xs rounded-lg font-bold">Beli Sekarang</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const ProductsView = () => (
+  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Manajemen Produk</h2>
+        <p className="text-sm text-slate-500">Kelola katalog dan inventaris Anda</p>
+      </div>
+      <div className="flex gap-3">
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50 transition-all">
+          <Download size={18} />
+          Export
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all">
+          <Plus size={18} />
+          Tambah Produk
+        </button>
+      </div>
+    </div>
+
+    {/* Filters */}
+    <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-wrap gap-4 items-center">
+      <div className="flex-1 min-w-[200px] relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <input 
+          type="text" 
+          placeholder="Cari SKU, Nama Produk..." 
+          className="w-full pl-10 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-100 transition-all"
+        />
+      </div>
+      <div className="flex gap-2">
+        <select className="px-4 py-2 bg-slate-50 border-none rounded-xl text-sm text-slate-600 focus:ring-2 focus:ring-blue-100">
+          <option>Semua Kategori</option>
+          <option>Fashion</option>
+          <option>Electronic</option>
+        </select>
+        <select className="px-4 py-2 bg-slate-50 border-none rounded-xl text-sm text-slate-600 focus:ring-2 focus:ring-blue-100">
+          <option>Status: Aktif</option>
+          <option>Status: Non-Aktif</option>
+          <option>Stok Tipis</option>
+        </select>
+      </div>
+    </div>
+
+    {/* Product Table */}
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <table className="w-full text-left border-collapse">
+        <thead className="bg-slate-50 border-b border-slate-100">
+          <tr>
+            <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Info Produk</th>
+            <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">SKU</th>
+            <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Kategori</th>
+            <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Stok</th>
+            <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Harga</th>
+            <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
+            <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
+          {PRODUCT_DATA.map((product) => (
+            <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
+              <td className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                    <Package size={20} className="text-slate-400" />
+                  </div>
+                  <span className="font-bold text-slate-700 text-sm">{product.name}</span>
+                </div>
+              </td>
+              <td className="p-4 text-sm text-slate-500 font-mono">{product.sku}</td>
+              <td className="p-4">
+                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-md text-[10px] font-bold uppercase">
+                  {product.category}
+                </span>
+              </td>
+              <td className="p-4">
+                <div className="flex flex-col gap-1">
+                   <span className={`text-sm font-bold ${product.stock < 10 ? 'text-rose-500' : 'text-slate-700'}`}>
+                    {product.stock} Unit
+                  </span>
+                  <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div className={`h-full ${product.stock < 10 ? 'bg-rose-500' : 'bg-blue-500'}`} style={{ width: `${Math.min(product.stock * 2, 100)}%` }}></div>
+                  </div>
+                </div>
+              </td>
+              <td className="p-4 text-sm font-bold text-slate-700">{product.price}</td>
+              <td className="p-4">
+                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                  product.status === 'Aktif' ? 'bg-emerald-50 text-emerald-600' :
+                  product.status === 'Stok Tipis' ? 'bg-amber-50 text-amber-600' :
+                  'bg-rose-50 text-rose-600'
+                }`}>
+                  {product.status}
+                </span>
+              </td>
+              <td className="p-4 text-center">
+                <button className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                  <MoreVertical size={18} />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
+const FinanceView = () => (
+  <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2 className="text-2xl font-bold text-slate-800">Laporan Keuangan</h2>
+        <p className="text-sm text-slate-500">Pantau cashflow dan profitabilitas bisnis</p>
+      </div>
+      <div className="flex gap-3">
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50 transition-all">
+          <FileDown size={18} />
+          PDF Report
+        </button>
+        <button className="flex items-center gap-2 px-4 py-2.5 bg-amber-500 text-white rounded-xl text-sm font-bold hover:bg-amber-600 shadow-lg shadow-amber-100 transition-all">
+          <CreditCard size={18} />
+          Catat Pengeluaran
+        </button>
+      </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="bg-gradient-to-br from-blue-700 to-blue-900 p-6 rounded-3xl text-white shadow-xl">
+        <p className="text-blue-100 text-xs font-medium uppercase mb-2">Total Saldo (E-Wallet)</p>
+        <h3 className="text-3xl font-bold mb-6">Rp 45.230.000</h3>
+        <div className="flex items-center justify-between">
+          <div className="flex -space-x-2">
+            {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-blue-800 bg-blue-100 flex items-center justify-center text-[10px] text-blue-800 font-bold">BNI</div>)}
+          </div>
+          <button className="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition-colors font-bold">Tarik Dana</button>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
+        <div>
+          <p className="text-slate-400 text-xs font-medium uppercase mb-1">Profit Bersih (Bulan Ini)</p>
+          <h3 className="text-2xl font-bold text-emerald-600">Rp 12.450.000</h3>
+        </div>
+        <div className="flex items-center gap-2 mt-4">
+          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-[65%] h-full bg-emerald-500 rounded-full"></div>
+          </div>
+          <span className="text-xs font-bold text-slate-400">65%</span>
+        </div>
+        <p className="text-[10px] text-slate-400 mt-2">Target profit: Rp 20.000.000</p>
+      </div>
+
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-between">
+        <div>
+          <p className="text-slate-400 text-xs font-medium uppercase mb-1">Piutang Pelanggan</p>
+          <h3 className="text-2xl font-bold text-amber-600">Rp 3.120.000</h3>
+        </div>
+        <div className="mt-4">
+          <button className="w-full py-2 bg-slate-50 text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-100 transition-colors">
+            Lihat Rincian Piutang
+          </button>
+        </div>
+      </div>
+    </div>
+
+    {/* Expense Tracking Table */}
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="p-6 border-b border-slate-50 flex justify-between items-center">
+        <h3 className="font-bold text-slate-800">Riwayat Pengeluaran Operasional</h3>
+      </div>
+      <div className="p-0">
+        <table className="w-full text-left">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase">Tanggal</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase">Kategori</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase">Keterangan</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase">Nominal</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {[
+              { date: '12 May 2024', cat: 'Marketing', desc: 'Biaya Iklan Facebook Ads', val: '-Rp 1.500.000', status: 'Lunas' },
+              { date: '11 May 2024', cat: 'Operasional', desc: 'Sewa Gudang Mingguan', val: '-Rp 750.000', status: 'Lunas' },
+              { date: '10 May 2024', cat: 'Logistik', desc: 'Packing Supplies (Bubble wrap)', val: '-Rp 200.000', status: 'Lunas' },
+            ].map((ex, i) => (
+              <tr key={i} className="text-sm">
+                <td className="p-4 text-slate-500">{ex.date}</td>
+                <td className="p-4">
+                  <span className="px-2 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-600">{ex.cat}</span>
+                </td>
+                <td className="p-4 text-slate-700 font-medium">{ex.desc}</td>
+                <td className="p-4 font-bold text-rose-500">{ex.val}</td>
+                <td className="p-4 text-right">
+                  <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold">{ex.status}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+);
+
+// --- Main App Component ---
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+
+  // Layout Management
+  const renderContent = () => {
+    switch(activeTab) {
+      case 'dashboard': return <DashboardView />;
+      case 'produk': return <ProductsView />;
+      case 'finansial': return <FinanceView />;
+      default: return <DashboardView />;
+    }
+  };
+
+  return (
+    <div className={`min-h-screen font-sans ${isDarkMode ? 'dark bg-slate-950' : 'bg-slate-50 text-slate-900'}`}>
+      
+      {/* Sidebar Overlay for Mobile */}
+      {!isSidebarOpen && (
+        <button 
+          onClick={() => setSidebarOpen(true)}
+          className="fixed bottom-6 right-6 lg:hidden z-50 p-4 bg-blue-600 text-white rounded-full shadow-2xl animate-bounce"
+        >
+          <LayoutDashboard size={24} />
+        </button>
+      )}
+
+      <div className="flex h-screen overflow-hidden">
+        {/* Sidebar */}
+        <aside 
+          className={`fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-slate-100 transition-transform duration-300 transform lg:relative lg:translate-x-0 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <div className="flex flex-col h-full">
+            {/* Logo */}
+            <div className="p-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
+                  <Store className="text-white" size={24} />
+                </div>
+                <div>
+                  <h1 className="text-lg font-black tracking-tight text-slate-800 leading-none">LUMINA</h1>
+                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">E-Commerce ERP</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden p-2 text-slate-400 hover:bg-slate-50 rounded-lg"
+              >
+                <ChevronRight className="rotate-180" size={20} />
+              </button>
+            </div>
+
+            {/* Menu Sections */}
+            <div className="flex-1 px-4 py-4 overflow-y-auto space-y-6">
+              <div>
+                <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Main Menu</p>
+                <div className="space-y-1">
+                  <SidebarItem 
+                    icon={LayoutDashboard} 
+                    label="Dashboard" 
+                    active={activeTab === 'dashboard'} 
+                    onClick={() => setActiveTab('dashboard')} 
+                  />
+                  <SidebarItem 
+                    icon={ShoppingCart} 
+                    label="Pesanan" 
+                    badge="12"
+                    subItems={['Menunggu Pembayaran', 'Sedang Diproses', 'Dalam Pengiriman', 'Retur & Batal']}
+                  />
+                  <SidebarItem 
+                    icon={Package} 
+                    label="Produk & Stok" 
+                    active={activeTab === 'produk'} 
+                    onClick={() => setActiveTab('produk')} 
+                    subItems={['Katalog Produk', 'Inventaris/Stok', 'Kategori', 'Barcode Generator']}
+                  />
+                  <SidebarItem 
+                    icon={Users} 
+                    label="Pelanggan" 
+                    subItems={['Database CRM', 'Segmentasi', 'Loyalty Points']}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Finansial & Analitik</p>
+                <div className="space-y-1">
+                  <SidebarItem 
+                    icon={Wallet} 
+                    label="Keuangan" 
+                    active={activeTab === 'finansial'} 
+                    onClick={() => setActiveTab('finansial')} 
+                    subItems={['Laba Rugi', 'Cashflow', 'Hutang Piutang', 'Rekap Biaya Iklan']}
+                  />
+                  <SidebarItem icon={BarChart3} label="Statistik Bisnis" />
+                  <SidebarItem icon={Database} label="Integrasi Marketplace" subItems={['Shopee', 'Tokopedia', 'TikTok Shop']} />
+                </div>
+              </div>
+
+              <div>
+                <p className="px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Lainnya</p>
+                <div className="space-y-1">
+                  <SidebarItem icon={Settings} label="Pengaturan" subItems={['Profil Toko', 'Manajemen User', 'Metode Pembayaran', 'Ekspedisi']} />
+                </div>
+              </div>
+            </div>
+
+            {/* User Profile */}
+            <div className="p-4 border-t border-slate-50">
+              <div className="p-3 bg-slate-50 rounded-2xl flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-md">
+                  AD
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-800 truncate">Admin Utama</p>
+                  <p className="text-[10px] text-slate-500 truncate">Owner - Platinum</p>
+                </div>
+                <button className="text-slate-400 hover:text-rose-500 transition-colors">
+                  <LogOut size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        {/* Main Content Area */}
+        <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          
+          {/* Top Navbar */}
+          <header className="h-20 bg-white border-b border-slate-100 px-6 flex items-center justify-between z-30">
+            <div className="flex items-center gap-4 flex-1">
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className={`lg:hidden p-2 bg-slate-50 text-slate-600 rounded-xl ${isSidebarOpen ? 'hidden' : 'block'}`}
+              >
+                <LayoutDashboard size={20} />
+              </button>
+              
+              <div className="max-w-md w-full relative hidden md:block">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                <input 
+                  type="text" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Cari Pesanan, Produk, atau No. Resi (Ctrl+K)" 
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-bold tracking-tighter uppercase mr-2 border border-blue-100">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse mr-2"></div>
+                Server: Online
+              </div>
+
+              <button 
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2.5 text-slate-500 hover:bg-slate-50 rounded-xl transition-all"
+              >
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+
+              <div className="relative">
+                <button 
+                  onClick={() => setNotificationsOpen(!isNotificationsOpen)}
+                  className="p-2.5 text-slate-500 hover:bg-slate-50 rounded-xl relative transition-all"
+                >
+                  <Bell size={20} />
+                  <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 border-2 border-white rounded-full"></span>
+                </button>
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="px-4 py-2 border-b border-slate-50 flex justify-between items-center">
+                      <span className="text-sm font-bold text-slate-800">Notifikasi</span>
+                      <span className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer">Tandai Dibaca</span>
+                    </div>
+                    <div className="max-h-[300px] overflow-y-auto">
+                      <div className="p-4 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50">
+                        <p className="text-xs font-bold text-slate-800">Stok Produk Hampir Habis!</p>
+                        <p className="text-[10px] text-slate-500 mt-1">T-Shirt Cotton Combed sisa 5 unit. Segera lakukan restock.</p>
+                      </div>
+                      <div className="p-4 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50">
+                        <p className="text-xs font-bold text-slate-800">Pesanan Baru #ORD-0129</p>
+                        <p className="text-[10px] text-slate-500 mt-1">Pesanan dari Tokopedia oleh Andre Kurnia sedang menunggu verifikasi.</p>
+                      </div>
+                    </div>
+                    <div className="p-2 text-center">
+                      <button className="text-[10px] font-bold text-slate-400 hover:text-slate-600">Lihat Semua Aktivitas</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="h-8 w-px bg-slate-100 mx-2 hidden sm:block"></div>
+
+              <button className="flex items-center gap-2 p-1 pr-3 bg-white border border-slate-100 rounded-xl hover:shadow-sm transition-all group">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                  JS
+                </div>
+                <div className="hidden md:block text-left leading-none">
+                  <p className="text-[11px] font-bold text-slate-800 group-hover:text-blue-600">Januar Store</p>
+                  <p className="text-[9px] text-slate-400 uppercase tracking-tighter">Gold Seller</p>
+                </div>
+              </button>
+            </div>
+          </header>
+
+          {/* Page Body */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+            {renderContent()}
+            
+            {/* Footer */}
+            <footer className="mt-12 pt-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4 text-slate-400 text-xs">
+              <p>&copy; 2024 Lumina ERP System. Built for Enterprise Scale.</p>
+              <div className="flex gap-6">
+                <a href="#" className="hover:text-blue-600">Panduan Pengguna</a>
+                <a href="#" className="hover:text-blue-600">Pusat Bantuan</a>
+                <a href="#" className="hover:text-blue-600">Kebijakan Privasi</a>
+              </div>
+            </footer>
+          </div>
+        </main>
+      </div>
+
+      {/* Global CSS for Animations & Scroller */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #e2e8f0;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #cbd5e1;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fade-in {
+          animation: fadeIn 0.4s ease-out forwards;
+        }
+      `}</style>
+    </div>
+  );
+}
