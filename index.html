@@ -3,677 +3,753 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PoetraNuri.com - Enterprise Warehouse ERP</title>
-    <!-- Tailwind CSS -->
+    <title>PoetraNuri.com | Sistem Manajemen Gudang Modern</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & Babel -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Icons & Charts -->
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
-        .dark .glass { background: rgba(15, 23, 42, 0.7); }
-        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' }
-                    }
-                }
-            }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #0F172A;
+            --accent: #EAB308;
+            --bg-light: #F8FAFC;
         }
-    </script>
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar-link.active {
+            background-color: #1E293B;
+            border-left: 4px solid var(--accent);
+            color: white;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        
+        #main-content { margin-left: 260px; width: calc(100% - 260px); }
+
+        @media (max-width: 768px) {
+            #main-content { margin-left: 0; width: 100%; }
+            .sidebar-closed { transform: translateX(-100%); }
+        }
+
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .animate-slide-in { animation: slideIn 0.3s ease-out forwards; }
+    </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-    <div id="root"></div>
+<body class="text-slate-800">
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useMemo } = React;
+    <!-- OVERLAY LOADING -->
+    <div id="loader" class="fixed inset-0 z-[100] bg-white flex items-center justify-center transition-opacity duration-500">
+        <div class="flex flex-col items-center">
+            <div class="w-16 h-16 border-4 border-slate-200 border-t-yellow-500 rounded-full animate-spin"></div>
+            <p class="mt-4 text-slate-500 font-medium tracking-widest uppercase text-xs">PoetraNuri.com</p>
+        </div>
+    </div>
 
-        // --- MOCK DATA & HELPERS ---
-        const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast-container" class="fixed top-5 right-5 z-[110] flex flex-col gap-3"></div>
 
-        // --- COMPONENTS ---
-        const Card = ({ children, className = "" }) => (
-            <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 ${className}`}>
-                {children}
+    <!-- LOGIN PAGE -->
+    <section id="login-page" class="min-h-screen flex items-center justify-center bg-slate-900 p-6">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden p-8 text-center">
+            <h1 class="text-3xl font-bold text-slate-900 mb-8">Poetra<span class="text-yellow-500">Nuri</span></h1>
+            <form id="login-form" class="space-y-4">
+                <input type="text" id="login-id" class="w-full px-4 py-3 rounded-lg border outline-none" value="admin@poetranuri.com">
+                <input type="password" id="login-pass" class="w-full px-4 py-3 rounded-lg border outline-none" value="admin123">
+                <button type="submit" class="w-full bg-slate-900 text-white py-3 rounded-lg font-bold">MASUK</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- MAIN APP -->
+    <main id="app-wrapper" class="hidden flex min-h-screen">
+        <aside id="sidebar" class="fixed left-0 top-0 h-full w-[260px] bg-slate-900 text-slate-400 z-50 transition-transform duration-300 md:translate-x-0 -translate-x-full flex flex-col">
+            <div class="p-6 border-b border-slate-800 flex justify-between items-center">
+                <span class="text-xl font-bold text-white uppercase tracking-wider">Poetra<span class="text-yellow-500">Nuri</span></span>
+                <button id="close-sidebar" class="md:hidden text-white"><i data-lucide="x"></i></button>
             </div>
-        );
-
-        const Badge = ({ children, color = "blue" }) => {
-            const variants = {
-                blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                rose: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
-                purple: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
-            };
-            return <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${variants[color] || variants.blue}`}>{children}</span>;
-        };
-
-        // --- CHART COMPONENT ---
-        const CombinedChart = ({ type = 'line', data, labels }) => {
-            const chartRef = useRef(null);
-            const chartInstance = useRef(null);
-
-            useEffect(() => {
-                const ctx = chartRef.current.getContext('2d');
-                if (chartInstance.current) chartInstance.current.destroy();
-                chartInstance.current = new Chart(ctx, {
-                    type,
-                    data: {
-                        labels,
-                        datasets: data.map(d => ({
-                            ...d,
-                            tension: 0.4,
-                            borderWidth: 2,
-                            pointRadius: 3
-                        }))
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 10 } } } },
-                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } }, x: { grid: { display: false } } }
-                    }
-                });
-                return () => chartInstance.current?.destroy();
-            }, [data, labels, type]);
-
-            return <canvas ref={chartRef}></canvas>;
-        };
-
-        // --- VIEW: DASHBOARD ---
-        const DashboardView = () => (
-            <div className="space-y-6 fade-in">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <Card className="border-b-4 border-blue-500">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Total Produk</p>
-                        <h3 className="text-xl font-black dark:text-white">4,281</h3>
-                    </Card>
-                    <Card className="border-b-4 border-emerald-500">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Masuk Hari Ini</p>
-                        <h3 className="text-xl font-black text-emerald-600">+142</h3>
-                    </Card>
-                    <Card className="border-b-4 border-rose-500">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Keluar Hari Ini</p>
-                        <h3 className="text-xl font-black text-rose-600">-89</h3>
-                    </Card>
-                    <Card className="border-b-4 border-amber-500">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Stok Menipis</p>
-                        <h3 className="text-xl font-black text-amber-500">14</h3>
-                    </Card>
-                    <Card className="border-b-4 border-indigo-500">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Total Supplier</p>
-                        <h3 className="text-xl font-black dark:text-white">82</h3>
-                    </Card>
-                    <Card className="border-b-4 border-purple-500">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Total Customer</p>
-                        <h3 className="text-xl font-black dark:text-white">1.2K</h3>
-                    </Card>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <Card className="lg:col-span-2 h-[400px]">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="font-bold dark:text-white">Analisis Performa Gudang</h3>
-                            <Badge color="emerald">Realtime Update</Badge>
-                        </div>
-                        <div className="h-[300px]">
-                            <CombinedChart 
-                                type="line"
-                                labels={['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun']}
-                                data={[
-                                    { label: 'Penjualan', data: [45, 52, 48, 70, 65, 85], borderColor: '#3b82f6', backgroundColor: 'transparent' },
-                                    { label: 'Stok Opname', data: [30, 40, 35, 50, 45, 60], borderColor: '#10b981', backgroundColor: 'transparent' }
-                                ]}
-                            />
-                        </div>
-                    </Card>
-                    <div className="space-y-4">
-                        <Card>
-                            <h4 className="font-bold text-sm mb-4 dark:text-white">Notifikasi AI & Stok</h4>
-                            <div className="space-y-3">
-                                <div className="flex gap-3 p-2 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/20">
-                                    <i data-lucide="alert-triangle" className="w-4 h-4 text-amber-500 shrink-0"></i>
-                                    <p className="text-xs text-amber-800 dark:text-amber-200"><b>Stok Kritis:</b> MacBook Pro M3 sisa 2 unit. Prediksi habis dalam 2 hari.</p>
-                                </div>
-                                <div className="flex gap-3 p-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/20">
-                                    <i data-lucide="sparkles" className="w-4 h-4 text-blue-500 shrink-0"></i>
-                                    <p className="text-xs text-blue-800 dark:text-blue-200"><b>Smart Suggest:</b> Segera restock Monitor Dell. Supplier "Mega Tech" sedang promo 10%.</p>
-                                </div>
-                            </div>
-                        </Card>
-                        <Card className="flex-1">
-                            <h4 className="font-bold text-sm mb-4 dark:text-white">Aktivitas Terbaru</h4>
-                            <div className="space-y-4 max-h-[140px] overflow-y-auto custom-scrollbar pr-2">
-                                {[
-                                    { msg: "Staff Budi melakukan stok masuk PN-001", time: "2m ago" },
-                                    { msg: "Sales Order #INV-882 disetujui", time: "15m ago" },
-                                    { msg: "Transfer gudang B ke gudang A", time: "1h ago" }
-                                ].map((act, i) => (
-                                    <div key={i} className="flex justify-between items-start gap-2 text-[11px]">
-                                        <span className="text-slate-600 dark:text-slate-400">• {act.msg}</span>
-                                        <span className="text-slate-400 shrink-0 italic">{act.time}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-                    </div>
-                </div>
-            </div>
-        );
-
-        // --- VIEW: MASTER DATA ---
-        const MasterDataView = () => (
-            <div className="space-y-6 fade-in">
-                <div className="flex flex-col md:flex-row justify-between gap-4">
-                    <div className="relative flex-1 max-w-md">
-                        <i data-lucide="search" className="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
-                        <input type="text" placeholder="Cari SKU, Nama, atau Barcode..." className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
-                    </div>
-                    <div className="flex gap-2">
-                        <button className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold flex items-center gap-2">
-                            <i data-lucide="download" className="w-4 h-4"></i> Export
-                        </button>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors">
-                            <i data-lucide="plus" className="w-4 h-4"></i> Tambah Barang
-                        </button>
-                    </div>
-                </div>
+            <nav class="p-4 flex flex-col gap-1 flex-grow overflow-y-auto custom-scrollbar">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mb-2">Utama</p>
+                <a href="#" onclick="showPage('dashboard')" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl transition"><i data-lucide="layout-dashboard" class="w-5 h-5"></i><span>Dashboard</span></a>
                 
-                <Card className="overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-slate-50 dark:bg-slate-800/50">
-                                <tr className="text-slate-500 text-[11px] uppercase tracking-wider">
-                                    <th className="p-4 font-bold">Produk & SKU</th>
-                                    <th className="p-4 font-bold">Kategori</th>
-                                    <th className="p-4 font-bold">Harga Modal/Jual</th>
-                                    <th className="p-4 font-bold">Stok/Gudang</th>
-                                    <th className="p-4 font-bold">Barcode</th>
-                                    <th className="p-4 font-bold">Aksi</th>
-                                </tr>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mt-6 mb-2">Operasional</p>
+                <a href="#" onclick="showPage('products')" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition"><i data-lucide="package" class="w-5 h-5"></i><span>Produk</span></a>
+                <a href="#" onclick="showPage('pos')" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition"><i data-lucide="shopping-cart" class="w-5 h-5"></i><span>Kasir</span></a>
+                <a href="#" onclick="showPage('sales')" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition"><i data-lucide="file-text" class="w-5 h-5"></i><span>Penjualan</span></a>
+                
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mt-6 mb-2">Relasi</p>
+                <a href="#" onclick="showPage('suppliers')" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition"><i data-lucide="truck" class="w-5 h-5"></i><span>Supplier</span></a>
+                <a href="#" onclick="showPage('customers')" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition"><i data-lucide="users" class="w-5 h-5"></i><span>Customer</span></a>
+
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mt-6 mb-2">Akuntansi</p>
+                <a href="#" onclick="showPage('finance')" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition"><i data-lucide="wallet" class="w-5 h-5"></i><span>Keuangan</span></a>
+                <a href="#" onclick="showPage('reports')" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl transition"><i data-lucide="bar-chart-3" class="w-5 h-5"></i><span>Laporan Keuangan</span></a>
+            </nav>
+            <div class="p-4 border-t border-slate-800">
+                <button onclick="location.reload()" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition"><i data-lucide="log-out" class="w-5 h-5"></i><span>Keluar</span></button>
+            </div>
+        </aside>
+
+        <div id="main-content" class="min-h-screen flex flex-col">
+            <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-40">
+                <div class="flex items-center gap-4">
+                    <button id="toggle-sidebar" class="md:hidden text-slate-600"><i data-lucide="menu"></i></button>
+                    <h2 id="page-title" class="text-xl font-bold text-slate-900">Dashboard</h2>
+                </div>
+            </header>
+
+            <div id="content-pages" class="p-8">
+                <!-- DASHBOARD -->
+                <div id="page-dashboard" class="page-view space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="glass-card p-6 rounded-2xl text-center">
+                            <p class="text-sm text-slate-500">Total Produk</p>
+                            <h3 id="stat-products" class="text-3xl font-bold mt-1">0</h3>
+                        </div>
+                        <div class="glass-card p-6 rounded-2xl text-center">
+                            <p class="text-sm text-slate-500">Total Stok</p>
+                            <h3 id="stat-stock" class="text-3xl font-bold mt-1">0</h3>
+                        </div>
+                        <div class="glass-card p-6 rounded-2xl text-center">
+                            <p class="text-sm text-slate-500">Saldo Kas</p>
+                            <h3 id="stat-balance" class="text-3xl font-bold mt-1 text-green-600">Rp 0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PRODUCTS -->
+                <div id="page-products" class="page-view hidden space-y-6">
+                    <div class="flex flex-wrap justify-between items-center gap-4">
+                        <input type="text" id="search-product" onkeyup="filterTable('product-list', 0)" placeholder="Cari..." class="px-4 py-2 border rounded-xl outline-none w-64">
+                        <div class="flex gap-2">
+                            <button onclick="openExportModal('products')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openModal('modal-product')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">+ Produk</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border overflow-hidden">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-400">
+                                <tr><th class="px-6 py-4">Produk</th><th class="px-6 py-4">SKU</th><th class="px-6 py-4">Stok</th><th class="px-6 py-4">Harga</th><th class="px-6 py-4">Aksi</th></tr>
                             </thead>
-                            <tbody className="text-sm">
-                                {[
-                                    { sku: "PN-ELE-001", name: "Laptop ASUS ROG", cat: "Elektronik", cost: 15000000, price: 18500000, stock: 45, wh: "Gudang Utama", code: "7890123" },
-                                    { sku: "PN-ACC-042", name: "Mouse Logitech MX", cat: "Aksesoris", cost: 800000, price: 1250000, stock: 120, wh: "Gudang B", code: "4455667" },
-                                    { sku: "PN-FUR-099", name: "Kursi Gaming SecretLab", cat: "Furniture", cost: 5000000, price: 7200000, stock: 5, wh: "Gudang Utama", code: "1122334" },
-                                ].map((item, i) => (
-                                    <tr key={i} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                                        <td className="p-4">
-                                            <div className="font-bold dark:text-white">{item.name}</div>
-                                            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">{item.sku}</div>
-                                        </td>
-                                        <td className="p-4">
-                                            <Badge color="blue">{item.cat}</Badge>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="text-xs text-slate-400 line-through">{formatIDR(item.cost)}</div>
-                                            <div className="font-bold text-emerald-600">{formatIDR(item.price)}</div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="dark:text-white font-medium">{item.stock} Unit</div>
-                                            <div className="text-[10px] text-slate-500">{item.wh}</div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="w-16 h-8 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-600">
-                                                <i data-lucide="barcode" className="w-6 h-6 text-slate-400"></i>
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex gap-1">
-                                                <button className="p-1.5 text-slate-400 hover:text-blue-500 transition-colors"><i data-lucide="eye" className="w-4 h-4"></i></button>
-                                                <button className="p-1.5 text-slate-400 hover:text-amber-500 transition-colors"><i data-lucide="edit-3" className="w-4 h-4"></i></button>
-                                                <button className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="trash-2" className="w-4 h-4"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
+                            <tbody id="product-list" class="divide-y"></tbody>
                         </table>
                     </div>
-                </Card>
-            </div>
-        );
+                </div>
 
-        // --- VIEW: STOK MANAGEMENT ---
-        const StockView = () => (
-            <div className="space-y-6 fade-in">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <Card className="flex items-center gap-4 cursor-pointer hover:border-blue-500 transition-all">
-                        <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600"><i data-lucide="arrow-down-left"></i></div>
-                        <div><p className="text-xs font-bold text-slate-500 uppercase">Stok Masuk</p><p className="text-xs text-slate-400">Restock Barang</p></div>
-                    </Card>
-                    <Card className="flex items-center gap-4 cursor-pointer hover:border-rose-500 transition-all">
-                        <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600"><i data-lucide="arrow-up-right"></i></div>
-                        <div><p className="text-xs font-bold text-slate-500 uppercase">Stok Keluar</p><p className="text-xs text-slate-400">Pengiriman Barang</p></div>
-                    </Card>
-                    <Card className="flex items-center gap-4 cursor-pointer hover:border-amber-500 transition-all">
-                        <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600"><i data-lucide="clipboard-check"></i></div>
-                        <div><p className="text-xs font-bold text-slate-500 uppercase">Stok Opname</p><p className="text-xs text-slate-400">Audit Fisik</p></div>
-                    </Card>
-                    <Card className="flex items-center gap-4 cursor-pointer hover:border-purple-500 transition-all">
-                        <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600"><i data-lucide="git-compare"></i></div>
-                        <div><p className="text-xs font-bold text-slate-500 uppercase">Transfer</p><p className="text-xs text-slate-400">Antar Gudang</p></div>
-                    </Card>
+                <!-- POS -->
+                <div id="page-pos" class="page-view hidden flex flex-col md:flex-row gap-8 h-[calc(100vh-160px)]">
+                    <div class="flex-grow flex flex-col gap-4 overflow-hidden">
+                        <div class="bg-white p-4 rounded-2xl border flex gap-4 overflow-x-auto custom-scrollbar shrink-0">
+                            <button onclick="renderPOS('all')" class="whitespace-nowrap px-4 py-2 rounded-lg bg-slate-900 text-white text-xs font-bold">Semua</button>
+                            <button onclick="renderPOS('shopee')" class="whitespace-nowrap px-4 py-2 rounded-lg bg-orange-100 text-orange-600 text-xs font-bold hover:bg-orange-200 transition">Pembeli Shopee</button>
+                            <button onclick="renderPOS('tiktok')" class="whitespace-nowrap px-4 py-2 rounded-lg bg-black text-white text-xs font-bold hover:bg-slate-800 transition">Pembeli TikTok</button>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 overflow-y-auto pr-2 custom-scrollbar" id="pos-grid"></div>
+                    </div>
+                    <div class="w-full md:w-96 bg-white rounded-3xl border p-6 flex flex-col shadow-sm shrink-0">
+                        <h4 class="font-bold mb-4 border-b pb-2 flex justify-between">
+                            <span>Keranjang</span>
+                            <span id="pos-platform" class="text-[10px] uppercase px-2 py-0.5 bg-slate-100 rounded text-slate-500">Umum</span>
+                        </h4>
+                        <div id="pos-cart" class="flex-grow overflow-y-auto space-y-2 custom-scrollbar"></div>
+                        <div class="mt-4 pt-4 border-t">
+                            <div class="flex justify-between font-bold text-xl"><span>Total</span><span id="pos-total">Rp 0</span></div>
+                            <button onclick="checkout()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-black mt-4 transition hover:bg-slate-800">BAYAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PENJUALAN -->
+                <div id="page-sales" class="page-view hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg text-slate-900">Riwayat Penjualan</h3>
+                        <div class="flex gap-2">
+                            <button onclick="openExportModal('sales')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <p id="total-sales-count" class="text-sm bg-slate-100 px-4 py-2 rounded-xl text-slate-500 font-medium">0 Transaksi</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-400 border-b">
+                                <tr><th class="px-6 py-4">Tgl / Waktu</th><th class="px-6 py-4">No. Invoice</th><th class="px-6 py-4">Item</th><th class="px-6 py-4">Platform</th><th class="px-6 py-4">Total</th><th class="px-6 py-4">Aksi</th></tr>
+                            </thead>
+                            <tbody id="sales-history-list" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- SUPPLIERS -->
+                <div id="page-suppliers" class="page-view hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg">Database Supplier</h3>
+                        <div class="flex gap-2">
+                            <button onclick="openExportModal('suppliers')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openModal('modal-supplier')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">+ Supplier</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-400">
+                                <tr><th class="px-6 py-4">Nama</th><th class="px-6 py-4">Kontak</th><th class="px-6 py-4">Alamat</th><th class="px-6 py-4">Aksi</th></tr>
+                            </thead>
+                            <tbody id="supplier-list" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CUSTOMERS -->
+                <div id="page-customers" class="page-view hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg">Database Customer</h3>
+                        <div class="flex gap-2">
+                            <button onclick="openExportModal('customers')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openModal('modal-customer')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">+ Customer</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-400">
+                                <tr><th class="px-6 py-4">Nama</th><th class="px-6 py-4">Email/Kontak</th><th class="px-6 py-4">Poin</th><th class="px-6 py-4">Aksi</th></tr>
+                            </thead>
+                            <tbody id="customer-list" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- KEUANGAN -->
+                <div id="page-finance" class="page-view hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-card p-6 rounded-2xl border-l-4 border-green-500">
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pemasukan</p>
+                            <h4 id="fin-income" class="text-2xl font-black text-green-600 mt-2">Rp 0</h4>
+                        </div>
+                        <div class="glass-card p-6 rounded-2xl border-l-4 border-red-500">
+                            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pengeluaran</p>
+                            <h4 id="fin-expense" class="text-2xl font-black text-red-600 mt-2">Rp 0</h4>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-lg">Mutasi Kas & Biaya</h3>
+                        <div class="flex gap-2">
+                            <button onclick="openExportModal('finance')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openModal('modal-finance')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">+ Catat Biaya</button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-xs font-bold uppercase text-slate-400">
+                                <tr><th class="px-6 py-4">Tanggal</th><th class="px-6 py-4">Kategori</th><th class="px-6 py-4">Keterangan</th><th class="px-6 py-4">Nominal</th><th class="px-6 py-4">Tipe</th><th class="px-6 py-4">Aksi</th></tr>
+                            </thead>
+                            <tbody id="finance-list" class="divide-y"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- LAPORAN -->
+                <div id="page-reports" class="page-view hidden space-y-8">
+                    <div class="flex justify-between items-center bg-slate-900 text-white p-6 rounded-2xl">
+                        <div>
+                            <h3 class="text-xl font-bold">Laporan Laba Rugi</h3>
+                            <p class="text-xs text-slate-400 mt-1">Estimasi periode berjalan secara real-time</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs uppercase font-bold text-slate-400">Laba Bersih</p>
+                            <h4 id="rep-net-profit" class="text-3xl font-black text-yellow-500">Rp 0</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODAL PRODUCT -->
+    <div id="modal-product" class="fixed inset-0 z-[100] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3 id="modal-product-title" class="text-xl font-bold mb-4">Data Produk</h3>
+            <input type="hidden" id="p-id">
+            <div class="space-y-3">
+                <input type="text" id="p-name" placeholder="Nama Produk" class="w-full p-3 border rounded-xl outline-none focus:border-slate-900">
+                <input type="text" id="p-sku" placeholder="SKU" class="w-full p-3 border rounded-xl outline-none focus:border-slate-900">
+                <input type="number" id="p-price" placeholder="Harga Jual" class="w-full p-3 border rounded-xl outline-none focus:border-slate-900">
+                <input type="number" id="p-stock" placeholder="Stok" class="w-full p-3 border rounded-xl outline-none focus:border-slate-900">
+                <div class="flex gap-2 pt-4">
+                    <button onclick="closeModal('modal-product')" class="flex-grow py-3 text-slate-400 font-bold">Batal</button>
+                    <button onclick="saveProduct()" class="flex-grow py-3 bg-slate-900 text-white rounded-xl font-bold">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SUPPLIER -->
+    <div id="modal-supplier" class="fixed inset-0 z-[100] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3 id="modal-supplier-title" class="text-xl font-bold mb-4">Data Supplier</h3>
+            <input type="hidden" id="s-id">
+            <div class="space-y-3">
+                <input type="text" id="s-name" placeholder="Nama Perusahaan" class="w-full p-3 border rounded-xl outline-none">
+                <input type="text" id="s-phone" placeholder="Kontak" class="w-full p-3 border rounded-xl outline-none">
+                <input type="text" id="s-addr" placeholder="Alamat" class="w-full p-3 border rounded-xl outline-none">
+                <div class="flex gap-2 pt-4">
+                    <button onclick="closeModal('modal-supplier')" class="flex-grow py-3 text-slate-400 font-bold">Batal</button>
+                    <button onclick="saveSupplier()" class="flex-grow py-3 bg-slate-900 text-white rounded-xl font-bold">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CUSTOMER -->
+    <div id="modal-customer" class="fixed inset-0 z-[100] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3 id="modal-customer-title" class="text-xl font-bold mb-4">Data Customer</h3>
+            <input type="hidden" id="c-id">
+            <div class="space-y-3">
+                <input type="text" id="c-name" placeholder="Nama" class="w-full p-3 border rounded-xl outline-none">
+                <input type="text" id="c-contact" placeholder="Email/Telp" class="w-full p-3 border rounded-xl outline-none">
+                <input type="number" id="c-points" placeholder="Poin" class="w-full p-3 border rounded-xl outline-none" value="0">
+                <div class="flex gap-2 pt-4">
+                    <button onclick="closeModal('modal-customer')" class="flex-grow py-3 text-slate-400 font-bold">Batal</button>
+                    <button onclick="saveCustomer()" class="flex-grow py-3 bg-slate-900 text-white rounded-xl font-bold">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL FINANCE -->
+    <div id="modal-finance" class="fixed inset-0 z-[100] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">Catat Pengeluaran Baru</h3>
+            <div class="space-y-3">
+                <input type="text" id="f-desc" placeholder="Keterangan (misal: Sewa Ruko)" class="w-full p-3 border rounded-xl outline-none">
+                <select id="f-category" class="w-full p-3 border rounded-xl outline-none">
+                    <option value="Operasional">Operasional</option>
+                    <option value="Listrik/Air">Listrik/Air</option>
+                    <option value="Gaji Pegawai">Gaji Pegawai</option>
+                    <option value="Pembelian Stok">Pembelian Stok</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+                <input type="number" id="f-amount" placeholder="Nominal Rp" class="w-full p-3 border rounded-xl outline-none">
+                <div class="flex gap-2 pt-4">
+                    <button onclick="closeModal('modal-finance')" class="flex-grow py-3 text-slate-400 font-bold">Batal</button>
+                    <button onclick="saveFinance()" class="flex-grow py-3 bg-red-600 text-white rounded-xl font-bold">Simpan Pengeluaran</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EKSPORT DENGAN PERIODE -->
+    <div id="modal-export" class="fixed inset-0 z-[110] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><i data-lucide="download"></i></div>
+                <h3 class="text-xl font-bold">Eksport Data</h3>
+            </div>
+            <input type="hidden" id="export-target-type">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Pilih Periode</label>
+                    <select id="export-period" onchange="toggleCustomDate(this.value)" class="w-full p-3 border rounded-xl outline-none bg-slate-50 font-medium">
+                        <option value="all">Semua Data</option>
+                        <option value="today">Hari Ini (Today)</option>
+                        <option value="yesterday">Kemarin (Yesterday)</option>
+                        <option value="last30">30 Hari Terakhir</option>
+                        <option value="lastmonth">Bulan Lalu (Last Month)</option>
+                        <option value="thismonth">Bulan Ini (This Month)</option>
+                        <option value="thisyear">Tahun Ini (This Year)</option>
+                        <option value="custom">Custom Date</option>
+                    </select>
                 </div>
                 
-                <div className="flex gap-4">
-                    <Card className="flex-1">
-                        <h3 className="font-bold mb-4 dark:text-white flex items-center gap-2">
-                            <i data-lucide="history" className="w-4 h-4 text-slate-400"></i> Mutasi Barang Terbaru (FIFO)
-                        </h3>
-                        <div className="space-y-4">
-                            {[1,2,3,4].map(i => (
-                                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-2 h-10 rounded-full ${i % 2 === 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
-                                        <div>
-                                            <p className="text-xs font-bold dark:text-white">ASUS ROG Zephyrus G14</p>
-                                            <p className="text-[10px] text-slate-500 italic">Oleh: Admin Darmawan • Ref: #TRX-9921</p>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className={`font-black ${i % 2 === 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{i % 2 === 0 ? '+' : '-'} {i * 5}</p>
-                                        <p className="text-[10px] text-slate-400 font-mono">14:20:01</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-                    <Card className="w-80 flex flex-col items-center justify-center text-center gap-4 bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none shadow-xl">
-                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
-                            <i data-lucide="scan" className="w-10 h-10"></i>
+                <div id="custom-date-fields" class="hidden space-y-3 pt-2">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Dari</label>
+                            <input type="date" id="export-start-date" class="w-full p-2 border rounded-lg text-sm">
                         </div>
                         <div>
-                            <h4 className="font-bold">Scan Barcode</h4>
-                            <p className="text-xs text-blue-100 px-4">Gunakan kamera untuk input stok masuk/keluar otomatis secara realtime.</p>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Hingga</label>
+                            <input type="date" id="export-end-date" class="w-full p-2 border rounded-lg text-sm">
                         </div>
-                        <button className="px-6 py-2 bg-white text-blue-700 rounded-xl font-bold text-sm shadow-lg">Buka Kamera</button>
-                    </Card>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex flex-col gap-2">
+                    <button onclick="processExport()" class="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 hover:bg-emerald-700 transition">
+                        <i data-lucide="file-spreadsheet"></i> DOWNLOAD EXCEL
+                    </button>
+                    <button onclick="closeModal('modal-export')" class="w-full py-3 text-slate-400 font-bold">Batal</button>
                 </div>
             </div>
-        );
+        </div>
+    </div>
 
-        // --- VIEW: FINANCE ---
-        const FinanceView = () => (
-            <div className="space-y-6 fade-in">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="bg-emerald-600 text-white border-none shadow-lg">
-                        <p className="text-xs font-bold text-emerald-100 uppercase">Pemasukan Bulan Ini</p>
-                        <h2 className="text-3xl font-black mt-2">{formatIDR(1245000000)}</h2>
-                        <div className="mt-4 flex items-center gap-2 text-xs text-emerald-200">
-                            <i data-lucide="trending-up" className="w-3 h-3"></i> +12% dari bulan lalu
-                        </div>
-                    </Card>
-                    <Card className="bg-rose-600 text-white border-none shadow-lg">
-                        <p className="text-xs font-bold text-rose-100 uppercase">Pengeluaran Bulan Ini</p>
-                        <h2 className="text-3xl font-black mt-2">{formatIDR(450200000)}</h2>
-                        <div className="mt-4 flex items-center gap-2 text-xs text-rose-200">
-                            <i data-lucide="trending-down" className="w-3 h-3"></i> -5% efisiensi operasional
-                        </div>
-                    </Card>
-                    <Card className="bg-slate-900 text-white border-none shadow-lg">
-                        <p className="text-xs font-bold text-slate-400 uppercase">Net Profit (Laba Bersih)</p>
-                        <h2 className="text-3xl font-black mt-2 text-blue-400">{formatIDR(794800000)}</h2>
-                        <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
-                            <i data-lucide="wallet" className="w-3 h-3"></i> Tersebar di 3 Rekening Bank
-                        </div>
-                    </Card>
-                </div>
+    <script>
+        // --- DATA STATE ---
+        let db = {
+            products: [
+                { id: 1, name: 'MacBook Pro M3', sku: 'PN-001', price: 28500000, stock: 12, createdAt: new Date() },
+                { id: 2, name: 'iPhone 15 Pro', sku: 'PN-002', price: 19500000, stock: 45, createdAt: new Date() },
+                { id: 3, name: 'Logitech MX Master', sku: 'PN-003', price: 1450000, stock: 80, createdAt: new Date() }
+            ],
+            suppliers: [{ id: 1, name: 'PT. Digital Mandiri', phone: '021-99881', addr: 'Jakarta', createdAt: new Date() }],
+            customers: [{ id: 1, name: 'Budi Santoso', contact: 'budi@mail.com', points: 150, createdAt: new Date() }],
+            sales: [],
+            finance: [],
+            initialBalance: 50000000
+        };
+        let cart = [];
+        let currentPlatform = 'umum';
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card className="h-[350px]">
-                        <h3 className="font-bold mb-4 dark:text-white">Cash Flow Analysis</h3>
-                        <div className="h-[250px]">
-                            <CombinedChart 
-                                type="bar"
-                                labels={['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']}
-                                data={[
-                                    { label: 'Debit', data: [120, 190, 300, 500, 200, 300, 450], backgroundColor: '#10b981' },
-                                    { label: 'Kredit', data: [80, 150, 120, 200, 150, 210, 100], backgroundColor: '#f43f5e' }
-                                ]}
-                            />
-                        </div>
-                    </Card>
-                    <Card>
-                        <div className="flex justify-between mb-4">
-                            <h3 className="font-bold dark:text-white">Jurnal Transaksi Terbaru</h3>
-                            <button className="text-blue-500 text-xs font-bold">Lihat Semua</button>
-                        </div>
-                        <div className="space-y-3">
-                            {[
-                                { title: "Penjualan INV-902", category: "Sales", amount: 15000000, type: "plus" },
-                                { title: "Restock PN-012", category: "Purchase", amount: -8000000, type: "minus" },
-                                { title: "Biaya Listrik Gudang", category: "Utility", amount: -1200000, type: "minus" },
-                                { title: "Penerimaan PO-881", category: "Income", amount: 25000000, type: "plus" }
-                            ].map((tx, i) => (
-                                <div key={i} className="flex justify-between items-center p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                    <div className="flex gap-3">
-                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tx.type === 'plus' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
-                                            <i data-lucide={tx.type === 'plus' ? 'arrow-down-left' : 'arrow-up-right'} className="w-5 h-5"></i>
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold dark:text-white">{tx.title}</p>
-                                            <p className="text-[10px] text-slate-500 uppercase">{tx.category}</p>
-                                        </div>
-                                    </div>
-                                    <p className={`text-sm font-black ${tx.type === 'plus' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                        {tx.type === 'plus' ? '+' : '-'} {formatIDR(Math.abs(tx.amount))}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </Card>
-                </div>
-            </div>
-        );
+        // --- CORE NAVIGATION ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page-view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+            document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+            const link = Array.from(document.querySelectorAll('.sidebar-link')).find(l => l.getAttribute('onclick').includes(pageId));
+            if(link) link.classList.add('active');
+            
+            document.getElementById('page-title').innerText = pageId.replace('-', ' ').toUpperCase();
 
-        // --- VIEW: EMPLOYEES / HR ---
-        const EmployeeView = () => (
-            <div className="space-y-6 fade-in">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold dark:text-white">Sumber Daya Manusia</h3>
-                    <div className="flex gap-2">
-                         <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold flex items-center gap-2"><i data-lucide="clock" className="w-4 h-4"></i> Rekap Absensi</button>
-                         <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold flex items-center gap-2"><i data-lucide="plus" className="w-4 h-4"></i> Karyawan Baru</button>
-                    </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {[
-                        { name: "Ahmad Darmawan", pos: "Kepala Gudang", div: "Operasional", status: "Hadir", img: "AD" },
-                        { name: "Siti Aminah", pos: "Admin Keuangan", div: "Finance", status: "Hadir", img: "SA" },
-                        { name: "Budi Santoso", pos: "Staff Gudang", div: "Operasional", status: "Izin", img: "BS" },
-                        { name: "Dewi Lestari", pos: "Data Analyst", div: "IT/AI", status: "Hadir", img: "DL" },
-                    ].map((emp, i) => (
-                        <Card key={i} className="text-center group hover:border-blue-500 transition-all cursor-pointer">
-                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700 mx-auto flex items-center justify-center text-xl font-black text-slate-500 dark:text-slate-400 mb-4 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all">
-                                {emp.img}
-                            </div>
-                            <h4 className="font-bold dark:text-white">{emp.name}</h4>
-                            <p className="text-[10px] text-slate-500 uppercase font-bold mt-1 tracking-widest">{emp.pos}</p>
-                            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                                <Badge color={emp.status === 'Hadir' ? 'emerald' : 'amber'}>{emp.status}</Badge>
-                                <button className="text-slate-400 hover:text-blue-500"><i data-lucide="more-horizontal" className="w-4 h-4"></i></button>
-                            </div>
-                        </Card>
-                    ))}
-                </div>
-
-                <Card>
-                    <h3 className="font-bold mb-6 dark:text-white flex items-center gap-2"><i data-lucide="lock" className="w-4 h-4"></i> Access Control & Logs</h3>
-                    <div className="space-y-3">
-                        {[
-                            { user: "Admin", action: "Mengubah harga jual PN-001", time: "10:20", ip: "192.168.1.1" },
-                            { user: "Staff Budi", action: "Login ke sistem via Mobile", time: "08:15", ip: "10.0.4.22" },
-                            { user: "Finance Siti", action: "Mencetak slip gaji Mei", time: "09:44", ip: "192.168.1.5" }
-                        ].map((log, i) => (
-                            <div key={i} className="flex justify-between items-center text-xs p-3 border-b border-slate-50 dark:border-slate-800 last:border-none">
-                                <div className="flex gap-4">
-                                    <span className="font-bold text-blue-600 dark:text-blue-400 w-24 shrink-0">{log.user}</span>
-                                    <span className="text-slate-600 dark:text-slate-300">{log.action}</span>
-                                </div>
-                                <div className="flex gap-4 text-slate-400 font-mono italic">
-                                    <span>{log.time}</span>
-                                    <span className="hidden md:inline">{log.ip}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            </div>
-        );
-
-        // --- VIEW: AI ASSISTANT ---
-        const AIView = () => (
-            <div className="h-full flex flex-col fade-in space-y-6">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                        <i data-lucide="bot" className="w-7 h-7"></i>
-                    </div>
-                    <div>
-                        <h3 className="text-xl font-black dark:text-white">PoetraNuri <span className="text-blue-600">SmartAI</span></h3>
-                        <p className="text-xs text-slate-500 font-medium italic">Menganalisis 4.2k data barang untuk optimasi gudang Anda...</p>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
-                    <div className="lg:col-span-2 flex flex-col gap-4">
-                        <Card className="flex-1 bg-slate-900 border-none shadow-2xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <i data-lucide="cpu" className="w-32 h-32 text-white"></i>
-                            </div>
-                            <div className="relative h-full flex flex-col">
-                                <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar p-4 text-sm">
-                                    <div className="flex gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shrink-0"><i data-lucide="bot" className="w-4 h-4"></i></div>
-                                        <div className="bg-slate-800 text-slate-200 p-3 rounded-2xl rounded-tl-none">Halo Darmawan! Berdasarkan data 30 hari terakhir, penjualan **MacBook Pro** meningkat 25%. Saya menyarankan restock 20 unit sebelum minggu depan. Ada yang ingin ditanyakan?</div>
-                                    </div>
-                                    <div className="flex gap-3 justify-end">
-                                        <div className="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-none">Berapa potensi profit jika saya restock 20 unit?</div>
-                                        <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-white shrink-0 font-bold text-[10px]">DP</div>
-                                    </div>
-                                </div>
-                                <div className="mt-4 flex gap-2">
-                                    <input type="text" placeholder="Tanyakan analisis stok atau laporan keuangan..." className="flex-1 bg-slate-800 border-none rounded-xl px-4 text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-                                    <button className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700"><i data-lucide="send" className="w-4 h-4"></i></button>
-                                </div>
-                            </div>
-                        </Card>
-                    </div>
-                    <div className="space-y-4">
-                        <Card className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none">
-                            <h4 className="font-bold text-sm mb-3">AI Prediction Score</h4>
-                            <div className="flex items-center gap-4">
-                                <div className="text-4xl font-black">94%</div>
-                                <div className="text-[10px] text-indigo-100">Akurasi prediksi stok habis berdasarkan pola historis.</div>
-                            </div>
-                            <div className="mt-4 w-full bg-white/20 h-2 rounded-full overflow-hidden">
-                                <div className="bg-white h-full w-[94%]"></div>
-                            </div>
-                        </Card>
-                        <Card>
-                            <h4 className="font-bold text-sm mb-4 dark:text-white">Smart Automation</h4>
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs dark:text-slate-300">Auto-PO ke Supplier</span>
-                                    <div className="w-10 h-5 bg-blue-600 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs dark:text-slate-300">WhatsApp Alert Stok</span>
-                                    <div className="w-10 h-5 bg-blue-600 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
-                                </div>
-                                <div className="flex items-center justify-between opacity-50">
-                                    <span className="text-xs dark:text-slate-300">Integrasi Marketplace</span>
-                                    <div className="w-10 h-5 bg-slate-400 rounded-full relative cursor-not-allowed"><div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
-                                </div>
-                            </div>
-                        </Card>
-                    </div>
-                </div>
-            </div>
-        );
-
-        // --- MAIN APP COMPONENT ---
-        function App() {
-            const [isDarkMode, setIsDarkMode] = useState(false);
-            const [sidebarOpen, setSidebarOpen] = useState(true);
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [isLoggedIn, setIsLoggedIn] = useState(false);
-            const [user, setUser] = useState(null);
-
-            useEffect(() => {
-                if (isDarkMode) document.documentElement.classList.add('dark');
-                else document.documentElement.classList.remove('dark');
-                lucide.createIcons();
-            }, [isDarkMode, isLoggedIn, activeTab]);
-
-            const handleLogin = (e) => {
-                e.preventDefault();
-                setIsLoggedIn(true);
-                setUser({ name: 'Darmawan Poetra', role: 'Owner' });
-            };
-
-            const renderContent = () => {
-                switch(activeTab) {
-                    case 'master': return <MasterDataView />;
-                    case 'stock': return <StockView />;
-                    case 'finance': return <FinanceView />;
-                    case 'employees': return <EmployeeView />;
-                    case 'ai': return <AIView />;
-                    default: return <DashboardView />;
-                }
-            };
-
-            if (!isLoggedIn) {
-                return (
-                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
-                        <div className="w-full max-w-md fade-in">
-                            <div className="text-center mb-10">
-                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-blue-600 mb-6 shadow-2xl shadow-blue-600/30">
-                                    <i data-lucide="box" className="text-white w-10 h-10"></i>
-                                </div>
-                                <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">PoetraNuri<span className="text-blue-600">.erp</span></h1>
-                                <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Enterprise Warehouse AI Management</p>
-                            </div>
-                            <Card className="shadow-2xl border-none p-8">
-                                <form onSubmit={handleLogin} className="space-y-5">
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-black text-slate-500 uppercase ml-1">E-mail Address</label>
-                                        <input type="email" placeholder="admin@poetranuri.com" className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" required />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <label className="text-xs font-black text-slate-500 uppercase ml-1">Password</label>
-                                        <input type="password" placeholder="••••••••" className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" required />
-                                    </div>
-                                    <div className="flex justify-between items-center text-xs px-1">
-                                        <label className="flex items-center gap-2 cursor-pointer text-slate-500"><input type="checkbox" className="rounded" /> Ingat saya</label>
-                                        <a href="#" className="text-blue-600 font-bold">Lupa Password?</a>
-                                    </div>
-                                    <button className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98]">MASUK KE DASHBOARD</button>
-                                    <div className="relative flex items-center py-2">
-                                        <div className="flex-grow border-t border-slate-100 dark:border-slate-800"></div>
-                                        <span className="flex-shrink mx-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Atau</span>
-                                        <div className="flex-grow border-t border-slate-100 dark:border-slate-800"></div>
-                                    </div>
-                                    <button type="button" className="w-full py-3.5 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-slate-700 dark:text-slate-300 flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
-                                        <img src="https://www.google.com/favicon.ico" className="w-4 h-4" /> Lanjutkan dengan Google
-                                    </button>
-                                </form>
-                            </Card>
-                        </div>
-                    </div>
-                );
-            }
-
-            return (
-                <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-                    {/* Sidebar */}
-                    <aside className={`${sidebarOpen ? 'w-72' : 'w-24'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50 fixed md:relative h-full`}>
-                        <div className="p-8 flex items-center gap-4 overflow-hidden">
-                            <div className="min-w-[48px] h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                <i data-lucide="box" className="text-white w-6 h-6"></i>
-                            </div>
-                            {sidebarOpen && <span className="font-black text-2xl dark:text-white tracking-tighter shrink-0">PoetraNuri<span className="text-blue-600">.</span></span>}
-                        </div>
-                        
-                        <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-8">
-                            {[
-                                { id: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
-                                { id: 'master', icon: 'database', label: 'Master Data' },
-                                { id: 'stock', icon: 'package-2', label: 'Manajemen Stok' },
-                                { id: 'purchase', icon: 'truck', label: 'Pembelian' },
-                                { id: 'sales', icon: 'shopping-cart', label: 'Penjualan' },
-                                { id: 'finance', icon: 'landmark', label: 'Keuangan' },
-                                { id: 'employees', icon: 'users', label: 'Karyawan & HR' },
-                                { id: 'reports', icon: 'file-text', label: 'Laporan' },
-                                { id: 'ai', icon: 'bot', label: 'AI Assistant', premium: true },
-                            ].map(item => (
-                                <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group relative ${activeTab === item.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
-                                    <i data-lucide={item.icon} className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : 'group-hover:text-blue-500'}`}></i>
-                                    {sidebarOpen && <span className="font-bold text-sm">{item.label}</span>}
-                                    {item.premium && sidebarOpen && <span className="ml-auto text-[8px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-md font-black uppercase tracking-tighter">AI</span>}
-                                </button>
-                            ))}
-                        </nav>
-
-                        <div className="p-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
-                            {sidebarOpen && (
-                                <div className="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-2xl mb-4">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Storage Usage</p>
-                                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mb-1"><div className="bg-blue-500 h-full w-[65%]"></div></div>
-                                    <p className="text-[9px] text-slate-500 text-center font-bold">12.5GB / 20GB Used</p>
-                                </div>
-                            )}
-                            <button onClick={() => setIsLoggedIn(false)} className="w-full flex items-center gap-3 px-4 py-3.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all font-bold group">
-                                <i data-lucide="log-out" className="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i>
-                                {sidebarOpen && <span>Keluar</span>}
-                            </button>
-                        </div>
-                    </aside>
-
-                    {/* Main Content Area */}
-                    <main className="flex-1 flex flex-col h-screen overflow-hidden">
-                        <header className="h-20 glass border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-40">
-                            <div className="flex items-center gap-6">
-                                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white rounded-xl transition-all dark:text-white">
-                                    <i data-lucide={sidebarOpen ? "chevrons-left" : "chevrons-right"} className="w-5 h-5"></i>
-                                </button>
-                                <div className="hidden md:block">
-                                    <h2 className="text-xl font-black capitalize dark:text-white tracking-tight">{activeTab.replace(/([A-Z])/g, ' $1').trim()}</h2>
-                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Poetranuri Logistics • {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                </div>
-                            </div>
-                            
-                            <div className="flex items-center gap-3">
-                                <div className="relative mr-4 hidden lg:block">
-                                    <button className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl relative group">
-                                        <i data-lucide="bell" className="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
-                                        <span className="absolute top-0 right-0 w-4 h-4 bg-rose-500 border-2 border-white dark:border-slate-900 rounded-full text-[8px] text-white flex items-center justify-center font-black">5</span>
-                                    </button>
-                                </div>
-                                <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                                    {isDarkMode ? <i data-lucide="sun" className="w-5 h-5"></i> : <i data-lucide="moon" className="w-5 h-5"></i>}
-                                </button>
-                                <div className="h-10 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
-                                <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-2xl group cursor-pointer hover:bg-blue-600 transition-all">
-                                    <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-[10px] text-white font-black group-hover:bg-white group-hover:text-blue-600 transition-colors">DP</div>
-                                    <div className="hidden md:block text-left">
-                                        <p className="text-xs font-black dark:text-white group-hover:text-white leading-none">{user?.name}</p>
-                                        <p className="text-[10px] text-slate-500 group-hover:text-blue-100 uppercase tracking-tighter">{user?.role}</p>
-                                    </div>
-                                    <i data-lucide="chevron-down" className="w-3 h-3 text-slate-400 group-hover:text-white transition-colors"></i>
-                                </div>
-                            </div>
-                        </header>
-
-                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 dark:bg-slate-950/50">
-                            {renderContent()}
-                        </div>
-                    </main>
-                </div>
-            );
+            if(pageId === 'dashboard') updateDashboard();
+            if(pageId === 'products') renderProducts();
+            if(pageId === 'pos') renderPOS('all');
+            if(pageId === 'sales') renderSalesHistory();
+            if(pageId === 'suppliers') renderSuppliers();
+            if(pageId === 'customers') renderCustomers();
+            if(pageId === 'finance') renderFinance();
+            
+            lucide.createIcons();
+            if(window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full');
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        // --- EXPORT LOGIC ---
+        function openExportModal(type) {
+            document.getElementById('export-target-type').value = type;
+            openModal('modal-export');
+        }
+
+        function toggleCustomDate(val) {
+            const fields = document.getElementById('custom-date-fields');
+            if(val === 'custom') fields.classList.remove('hidden');
+            else fields.classList.add('hidden');
+        }
+
+        function isDateInRange(dateToCheck, period) {
+            const targetDate = new Date(dateToCheck);
+            const now = new Date();
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const yesterdayStart = todayStart - (24 * 60 * 60 * 1000);
+            
+            switch(period) {
+                case 'all': return true;
+                case 'today': return targetDate.getTime() >= todayStart;
+                case 'yesterday': return targetDate.getTime() >= yesterdayStart && targetDate.getTime() < todayStart;
+                case 'last30': return targetDate.getTime() >= (now.getTime() - (30 * 24 * 60 * 60 * 1000));
+                case 'lastmonth': {
+                    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                    return targetDate >= lastMonth && targetDate <= endLastMonth;
+                }
+                case 'thismonth': {
+                    const firstDayMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                    return targetDate >= firstDayMonth;
+                }
+                case 'thisyear': {
+                    const firstDayYear = new Date(now.getFullYear(), 0, 1);
+                    return targetDate >= firstDayYear;
+                }
+                case 'custom': {
+                    const startInput = document.getElementById('export-start-date').value;
+                    const endInput = document.getElementById('export-end-date').value;
+                    if(!startInput || !endInput) return true;
+                    const startDate = new Date(startInput).getTime();
+                    const endDate = new Date(endInput).setHours(23,59,59,999);
+                    return targetDate.getTime() >= startDate && targetDate.getTime() <= endDate;
+                }
+                default: return true;
+            }
+        }
+
+        function processExport() {
+            const type = document.getElementById('export-target-type').value;
+            const period = document.getElementById('export-period').value;
+            let data = db[type] || [];
+            
+            // Filter data berdasarkan periode
+            const filteredData = data.filter(item => {
+                const dateToCompare = item.createdAt || item.rawDate;
+                return isDateInRange(dateToCompare, period);
+            });
+
+            if(filteredData.length === 0) {
+                showToast("Tidak ada data ditemukan untuk periode ini", "error");
+                return;
+            }
+
+            // CSV Generation
+            let csv = "";
+            let filename = `poetranuri_${type}_${period}_${new Date().toISOString().slice(0,10)}.csv`;
+
+            if(type === 'products') {
+                csv = "ID,Nama Produk,SKU,Harga,Stok,Tgl Input\n";
+                filteredData.forEach(p => { csv += `${p.id},${p.name},${p.sku},${p.price},${p.stock},${p.createdAt}\n`; });
+            } else if(type === 'sales') {
+                csv = "ID,Tgl,Invoice,Platform,Total\n";
+                filteredData.forEach(s => { csv += `${s.id},${s.date},${s.invoice},${s.platform},${s.total}\n`; });
+            } else if(type === 'suppliers') {
+                csv = "ID,Nama,Kontak,Alamat\n";
+                filteredData.forEach(s => { csv += `${s.id},${s.name},${s.phone},${s.addr}\n`; });
+            } else if(type === 'customers') {
+                csv = "ID,Nama,Kontak,Poin\n";
+                filteredData.forEach(c => { csv += `${c.id},${c.name},${c.contact},${c.points}\n`; });
+            } else if(type === 'finance') {
+                csv = "ID,Tgl,Kategori,Keterangan,Nominal,Tipe\n";
+                filteredData.forEach(f => { csv += `${f.id},${f.date},${f.category},${f.desc},${f.amount},${f.type}\n`; });
+            }
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            closeModal('modal-export');
+            showToast("Data berhasil dieksport!");
+        }
+
+        // --- DASHBOARD ---
+        function updateDashboard() {
+            document.getElementById('stat-products').innerText = db.products.length;
+            document.getElementById('stat-stock').innerText = db.products.reduce((a, b) => a + (parseInt(b.stock) || 0), 0);
+            const income = db.finance.filter(f => f.type === 'IN').reduce((a, b) => a + b.amount, 0);
+            const expense = db.finance.filter(f => f.type === 'OUT').reduce((a, b) => a + b.amount, 0);
+            const currentBalance = db.initialBalance + income - expense;
+            document.getElementById('stat-balance').innerText = `Rp ${currentBalance.toLocaleString()}`;
+        }
+
+        // --- POS LOGIC ---
+        function renderPOS(platform = 'all') {
+            currentPlatform = platform === 'all' ? 'umum' : platform;
+            document.getElementById('pos-platform').innerText = currentPlatform;
+            const grid = document.getElementById('pos-grid');
+            grid.innerHTML = db.products.filter(p => p.stock > 0).map(p => `
+                <div onclick="addToCart(${p.id})" class="bg-white p-4 rounded-2xl border border-slate-100 hover:border-slate-900 cursor-pointer shadow-sm hover:shadow-md transition active:scale-95">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase shrink-0">${p.sku}</p>
+                    <h5 class="font-bold text-sm truncate shrink-0">${p.name}</h5>
+                    <p class="text-xs text-yellow-600 font-black shrink-0">Rp ${p.price.toLocaleString()}</p>
+                    <p class="text-[10px] text-slate-400 mt-2 shrink-0">Stok: ${p.stock}</p>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(id) {
+            const p = db.products.find(x => x.id === id);
+            const exists = cart.find(x => x.id === id);
+            if(exists) { if(exists.qty < p.stock) exists.qty++; else return showToast('Stok tidak cukup!', 'error'); }
+            else { cart.push({...p, qty: 1}); }
+            renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('pos-cart');
+            let total = 0;
+            if(cart.length === 0) list.innerHTML = `<p class="text-center py-10 text-slate-300 text-xs italic">Belum ada item dipilih</p>`;
+            else {
+                list.innerHTML = cart.map(item => {
+                    total += (item.price * item.qty);
+                    return `<div class="bg-slate-50 p-3 rounded-xl flex justify-between items-center animate-slide-in"><div><p class="text-[11px] font-bold">${item.name}</p><p class="text-[10px] text-slate-400">${item.qty}x Rp ${item.price.toLocaleString()}</p></div><button onclick="removeFromCart(${item.id})" class="text-red-300 hover:text-red-500"><i data-lucide="x-circle" class="w-4 h-4"></i></button></div>`;
+                }).join('');
+            }
+            document.getElementById('pos-total').innerText = `Rp ${total.toLocaleString()}`;
+            lucide.createIcons();
+        }
+
+        function checkout() {
+            if(cart.length === 0) return alert('Keranjang masih kosong!');
+            const now = new Date();
+            const invoiceNo = 'INV-' + now.getTime().toString().slice(-6);
+            const totalAmount = cart.reduce((a, b) => a + (b.price * b.qty), 0);
+
+            cart.forEach(item => {
+                const prod = db.products.find(p => p.id === item.id);
+                if(prod) prod.stock -= item.qty;
+            });
+
+            db.sales.unshift({
+                id: Date.now(),
+                rawDate: now,
+                date: now.toLocaleString('id-ID'),
+                invoice: invoiceNo,
+                itemsCount: cart.length,
+                platform: currentPlatform,
+                total: totalAmount,
+                createdAt: now
+            });
+
+            db.finance.unshift({
+                id: Date.now() + 1,
+                rawDate: now,
+                date: now.toLocaleString('id-ID'),
+                category: 'Penjualan',
+                desc: `Kasir: ${invoiceNo} (${currentPlatform})`,
+                amount: totalAmount,
+                type: 'IN',
+                createdAt: now
+            });
+
+            cart = []; renderCart(); renderPOS('all'); showToast(`Berhasil! ${invoiceNo} tersimpan`);
+        }
+
+        // --- RENDER FUNCTIONS ---
+        function renderProducts() {
+            const body = document.getElementById('product-list');
+            body.innerHTML = db.products.map(p => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 font-bold text-sm">${p.name}</td>
+                    <td class="px-6 py-4 text-slate-400 text-xs font-mono">${p.sku}</td>
+                    <td class="px-6 py-4 font-semibold">${p.stock}</td>
+                    <td class="px-6 py-4 font-semibold">Rp ${p.price.toLocaleString()}</td>
+                    <td class="px-6 py-4 flex gap-2">
+                        <button onclick="editItem('products', ${p.id})" class="text-blue-500 p-2"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="deleteItem('products', ${p.id})" class="text-red-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function saveProduct() {
+            const id = document.getElementById('p-id').value;
+            const name = document.getElementById('p-name').value;
+            const sku = document.getElementById('p-sku').value;
+            const price = parseInt(document.getElementById('p-price').value);
+            const stock = parseInt(document.getElementById('p-stock').value);
+            if(!name || isNaN(price)) return;
+            if(id) {
+                const idx = db.products.findIndex(x => x.id == id);
+                db.products[idx] = { ...db.products[idx], name, sku, price, stock };
+            } else {
+                db.products.unshift({ id: Date.now(), name, sku, price, stock, createdAt: new Date() });
+            }
+            closeModal('modal-product'); renderProducts(); showToast('Produk Disimpan');
+        }
+
+        function renderSalesHistory() {
+            const list = document.getElementById('sales-history-list');
+            document.getElementById('total-sales-count').innerText = `${db.sales.length} Transaksi`;
+            list.innerHTML = db.sales.map(s => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 text-xs text-slate-500">${s.date}</td>
+                    <td class="px-6 py-4 font-mono font-bold text-slate-900">${s.invoice}</td>
+                    <td class="px-6 py-4 text-sm">${s.itemsCount} Item</td>
+                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.platform === 'shopee' ? 'bg-orange-100 text-orange-600' : s.platform === 'tiktok' ? 'bg-black text-white' : 'bg-slate-100 text-slate-500'} uppercase">${s.platform}</span></td>
+                    <td class="px-6 py-4 font-black text-slate-900">Rp ${s.total.toLocaleString()}</td>
+                    <td class="px-6 py-4"><button onclick="deleteItem('sales', ${s.id})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function renderSuppliers() {
+            const body = document.getElementById('supplier-list');
+            body.innerHTML = db.suppliers.map(s => `
+                <tr class="hover:bg-slate-50 transition"><td class="px-6 py-4 font-bold text-sm">${s.name}</td><td class="px-6 py-4 text-sm">${s.phone}</td><td class="px-6 py-4 text-xs">${s.addr}</td><td class="px-6 py-4 flex gap-2"><button onclick="editItem('suppliers', ${s.id})" class="text-blue-500"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="deleteItem('suppliers', ${s.id})" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>
+            `).join(''); lucide.createIcons();
+        }
+
+        function saveSupplier() {
+            const name = document.getElementById('s-name').value;
+            const phone = document.getElementById('s-phone').value;
+            const addr = document.getElementById('s-addr').value;
+            if(!name) return;
+            db.suppliers.unshift({ id: Date.now(), name, phone, addr, createdAt: new Date() });
+            closeModal('modal-supplier'); renderSuppliers(); showToast('Supplier Tersimpan');
+        }
+
+        function renderCustomers() {
+            const body = document.getElementById('customer-list');
+            body.innerHTML = db.customers.map(c => `<tr class="hover:bg-slate-50 transition"><td class="px-6 py-4 font-bold text-sm">${c.name}</td><td class="px-6 py-4 text-sm">${c.contact}</td><td class="px-6 py-4 font-black text-yellow-600">${c.points} Pts</td><td class="px-6 py-4 flex gap-2"><button onclick="editItem('customers', ${c.id})" class="text-blue-500"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="deleteItem('customers', ${c.id})" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join(''); lucide.createIcons();
+        }
+
+        function saveCustomer() {
+            const name = document.getElementById('c-name').value;
+            const contact = document.getElementById('c-contact').value;
+            const points = parseInt(document.getElementById('c-points').value || 0);
+            if(!name) return;
+            db.customers.unshift({ id: Date.now(), name, contact, points, createdAt: new Date() });
+            closeModal('modal-customer'); renderCustomers(); showToast('Customer Tersimpan');
+        }
+
+        function renderFinance() {
+            const list = document.getElementById('finance-list');
+            const income = db.finance.filter(f => f.type === 'IN').reduce((a, b) => a + b.amount, 0);
+            const expense = db.finance.filter(f => f.type === 'OUT').reduce((a, b) => a + b.amount, 0);
+            document.getElementById('fin-income').innerText = `Rp ${income.toLocaleString()}`;
+            document.getElementById('fin-expense').innerText = `Rp ${expense.toLocaleString()}`;
+            list.innerHTML = db.finance.map(f => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 text-xs text-slate-500">${f.date}</td>
+                    <td class="px-6 py-4 text-xs font-bold uppercase text-slate-400">${f.category}</td>
+                    <td class="px-6 py-4 text-sm">${f.desc}</td>
+                    <td class="px-6 py-4 font-bold ${f.type === 'IN' ? 'text-green-600' : 'text-red-600'}">Rp ${f.amount.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-[10px]"><span class="px-2 py-1 rounded-full font-bold ${f.type === 'IN' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}">${f.type}</span></td>
+                    <td class="px-6 py-4"><button onclick="deleteItem('finance', ${f.id})" class="text-slate-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                </tr>
+            `).join(''); lucide.createIcons();
+        }
+
+        function saveFinance() {
+            const desc = document.getElementById('f-desc').value;
+            const cat = document.getElementById('f-category').value;
+            const amount = parseInt(document.getElementById('f-amount').value);
+            if(!desc || isNaN(amount)) return;
+            const now = new Date();
+            db.finance.unshift({ id: Date.now(), rawDate: now, date: now.toLocaleString('id-ID'), category: cat, desc, amount, type: 'OUT', createdAt: now });
+            closeModal('modal-finance'); renderFinance(); showToast('Pengeluaran Dicatat');
+        }
+
+        // --- UTILS ---
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = `px-6 py-3 rounded-xl shadow-xl animate-slide-in flex items-center gap-2 border-l-4 ${type === 'success' ? 'bg-slate-900 text-white border-yellow-500' : 'bg-red-600 text-white border-white'}`;
+            t.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-4 h-4"></i><span class="text-sm font-bold">${msg}</span>`;
+            container.appendChild(t); lucide.createIcons(); setTimeout(() => t.remove(), 3000);
+        }
+
+        function removeFromCart(id) { cart = cart.filter(x => x.id !== id); renderCart(); }
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function filterTable(id, col) {
+            let q = document.getElementById('search-product').value.toLowerCase();
+            let rows = document.getElementById(id).rows;
+            for(let r of rows) r.style.display = r.cells[col].innerText.toLowerCase().includes(q) ? '' : 'none';
+        }
+
+        window.onload = () => {
+            document.getElementById('login-form').onsubmit = (e) => { e.preventDefault();
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('app-wrapper').classList.remove('hidden');
+                showPage('dashboard');
+            };
+            document.getElementById('toggle-sidebar').onclick = () => document.getElementById('sidebar').classList.toggle('-translate-x-full');
+            document.getElementById('close-sidebar').onclick = () => document.getElementById('sidebar').classList.add('-translate-x-full');
+            setTimeout(() => document.getElementById('loader').classList.add('hidden'), 500);
+            lucide.createIcons();
+        };
     </script>
 </body>
 </html>
