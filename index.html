@@ -134,7 +134,9 @@
                     <div class="flex flex-wrap justify-between items-center gap-4">
                         <input type="text" id="search-product" onkeyup="filterTable('product-list', 0)" placeholder="Cari..." class="px-4 py-2 border rounded-xl outline-none w-64">
                         <div class="flex gap-2">
-                            <button onclick="openExportModal('products')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openExportModal('products')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm transition hover:bg-emerald-700">
+                                <i data-lucide="download" class="w-4 h-4"></i> Excel
+                            </button>
                             <button onclick="openModal('modal-product')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">+ Produk</button>
                         </div>
                     </div>
@@ -171,12 +173,14 @@
                     </div>
                 </div>
 
-                <!-- PENJUALAN -->
+                <!-- PENJUALAN (HISTORY) -->
                 <div id="page-sales" class="page-view hidden space-y-6">
                     <div class="flex justify-between items-center">
                         <h3 class="font-bold text-lg text-slate-900">Riwayat Penjualan</h3>
                         <div class="flex gap-2">
-                            <button onclick="openExportModal('sales')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openExportModal('sales')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm transition hover:bg-emerald-700">
+                                <i data-lucide="download" class="w-4 h-4"></i> Excel
+                            </button>
                             <p id="total-sales-count" class="text-sm bg-slate-100 px-4 py-2 rounded-xl text-slate-500 font-medium">0 Transaksi</p>
                         </div>
                     </div>
@@ -195,7 +199,9 @@
                     <div class="flex justify-between items-center">
                         <h3 class="font-bold text-lg">Database Supplier</h3>
                         <div class="flex gap-2">
-                            <button onclick="openExportModal('suppliers')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openExportModal('suppliers')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm transition hover:bg-emerald-700">
+                                <i data-lucide="download" class="w-4 h-4"></i> Excel
+                            </button>
                             <button onclick="openModal('modal-supplier')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">+ Supplier</button>
                         </div>
                     </div>
@@ -214,7 +220,9 @@
                     <div class="flex justify-between items-center">
                         <h3 class="font-bold text-lg">Database Customer</h3>
                         <div class="flex gap-2">
-                            <button onclick="openExportModal('customers')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openExportModal('customers')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm transition hover:bg-emerald-700">
+                                <i data-lucide="download" class="w-4 h-4"></i> Excel
+                            </button>
                             <button onclick="openModal('modal-customer')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">+ Customer</button>
                         </div>
                     </div>
@@ -243,7 +251,9 @@
                     <div class="flex justify-between items-center">
                         <h3 class="font-bold text-lg">Mutasi Kas & Biaya</h3>
                         <div class="flex gap-2">
-                            <button onclick="openExportModal('finance')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>
+                            <button onclick="openExportModal('finance')" class="bg-emerald-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 text-sm transition hover:bg-emerald-700">
+                                <i data-lucide="download" class="w-4 h-4"></i> Excel
+                            </button>
                             <button onclick="openModal('modal-finance')" class="bg-slate-900 text-white px-6 py-2 rounded-xl font-bold text-sm">+ Catat Biaya</button>
                         </div>
                     </div>
@@ -267,6 +277,26 @@
                         <div class="text-right">
                             <p class="text-xs uppercase font-bold text-slate-400">Laba Bersih</p>
                             <h4 id="rep-net-profit" class="text-3xl font-black text-yellow-500">Rp 0</h4>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-4">
+                            <h4 class="font-bold flex items-center gap-2 text-slate-700"><i data-lucide="trending-up" class="w-4 h-4 text-green-500"></i> Sumber Pendapatan</h4>
+                            <div class="bg-white p-6 rounded-2xl border shadow-sm space-y-3">
+                                <div class="flex justify-between"><span>Penjualan Barang</span><span id="rep-income-sales" class="font-bold">Rp 0</span></div>
+                                <div class="flex justify-between text-slate-400 text-sm"><span>Lainnya</span><span>Rp 0</span></div>
+                                <hr>
+                                <div class="flex justify-between font-black"><span>Total Pendapatan</span><span id="rep-total-income">Rp 0</span></div>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <h4 class="font-bold flex items-center gap-2 text-slate-700"><i data-lucide="trending-down" class="w-4 h-4 text-red-500"></i> Beban Operasional</h4>
+                            <div class="bg-white p-6 rounded-2xl border shadow-sm space-y-3">
+                                <div class="flex justify-between"><span>Biaya Inventaris</span><span id="rep-expense-inv" class="font-bold text-red-500">Rp 0</span></div>
+                                <div class="flex justify-between text-slate-400 text-sm"><span>Beban Lain-lain</span><span id="rep-expense-others" class="text-red-500">Rp 0</span></div>
+                                <hr>
+                                <div class="flex justify-between font-black"><span>Total Beban</span><span id="rep-total-expense" class="text-red-500">Rp 0</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -348,45 +378,44 @@
         </div>
     </div>
 
-    <!-- MODAL EKSPORT DENGAN PERIODE -->
+    <!-- NEW: MODAL EXPORT PERIOD -->
     <div id="modal-export" class="fixed inset-0 z-[110] hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl">
-            <div class="flex items-center gap-3 mb-4">
+            <div class="flex items-center gap-3 mb-6">
                 <div class="p-2 bg-emerald-100 text-emerald-600 rounded-lg"><i data-lucide="download"></i></div>
-                <h3 class="text-xl font-bold">Eksport Data</h3>
+                <h3 class="text-xl font-bold">Pilih Periode Eksport</h3>
             </div>
-            <input type="hidden" id="export-target-type">
+            
+            <input type="hidden" id="export-source-type">
+            
             <div class="space-y-4">
-                <div>
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Pilih Periode</label>
-                    <select id="export-period" onchange="toggleCustomDate(this.value)" class="w-full p-3 border rounded-xl outline-none bg-slate-50 font-medium">
-                        <option value="all">Semua Data</option>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Periode Waktu</label>
+                    <select id="export-period" onchange="toggleCustomDateInput(this.value)" class="w-full p-3 border rounded-xl outline-none font-medium text-sm bg-slate-50">
                         <option value="today">Hari Ini (Today)</option>
                         <option value="yesterday">Kemarin (Yesterday)</option>
                         <option value="last30">30 Hari Terakhir</option>
-                        <option value="lastmonth">Bulan Lalu (Last Month)</option>
-                        <option value="thismonth">Bulan Ini (This Month)</option>
-                        <option value="thisyear">Tahun Ini (This Year)</option>
-                        <option value="custom">Custom Date</option>
+                        <option value="lastMonth">Bulan Lalu (Last Month)</option>
+                        <option value="thisMonth">Bulan Ini (This Month)</option>
+                        <option value="thisYear">Tahun Ini (This Year)</option>
+                        <option value="custom">Pilih Tanggal (Custom)</option>
                     </select>
                 </div>
-                
-                <div id="custom-date-fields" class="hidden space-y-3 pt-2">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase">Dari</label>
-                            <input type="date" id="export-start-date" class="w-full p-2 border rounded-lg text-sm">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-slate-400 uppercase">Hingga</label>
-                            <input type="date" id="export-end-date" class="w-full p-2 border rounded-lg text-sm">
-                        </div>
+
+                <div id="custom-date-fields" class="hidden grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mulai</label>
+                        <input type="date" id="export-date-start" class="w-full p-2 border rounded-lg text-sm">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sampai</label>
+                        <input type="date" id="export-date-end" class="w-full p-2 border rounded-lg text-sm">
                     </div>
                 </div>
 
-                <div class="pt-4 flex flex-col gap-2">
-                    <button onclick="processExport()" class="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 hover:bg-emerald-700 transition">
-                        <i data-lucide="file-spreadsheet"></i> DOWNLOAD EXCEL
+                <div class="flex flex-col gap-2 pt-4">
+                    <button onclick="executeExport()" class="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black transition hover:bg-emerald-700 shadow-lg shadow-emerald-200">
+                        DOWNLOAD EXCEL (.CSV)
                     </button>
                     <button onclick="closeModal('modal-export')" class="w-full py-3 text-slate-400 font-bold">Batal</button>
                 </div>
@@ -395,7 +424,7 @@
     </div>
 
     <script>
-        // --- DATA STATE ---
+        // --- DATABASE STATE ---
         let db = {
             products: [
                 { id: 1, name: 'MacBook Pro M3', sku: 'PN-001', price: 28500000, stock: 12, createdAt: new Date() },
@@ -410,6 +439,114 @@
         };
         let cart = [];
         let currentPlatform = 'umum';
+
+        // --- EXPORT LOGIC ---
+        function openExportModal(type) {
+            document.getElementById('export-source-type').value = type;
+            document.getElementById('export-period').value = 'today';
+            toggleCustomDateInput('today');
+            openModal('modal-export');
+        }
+
+        function toggleCustomDateInput(val) {
+            const container = document.getElementById('custom-date-fields');
+            if(val === 'custom') container.classList.remove('hidden');
+            else container.classList.add('hidden');
+        }
+
+        function executeExport() {
+            const type = document.getElementById('export-source-type').value;
+            const period = document.getElementById('export-period').value;
+            
+            let sourceData = [...db[type]];
+            let dateKey = 'createdAt';
+            if (type === 'sales' || type === 'finance') dateKey = 'rawDate';
+
+            const filteredData = filterByPeriod(sourceData, period, dateKey);
+
+            if(filteredData.length === 0) {
+                return alert('Tidak ada data dalam periode yang dipilih!');
+            }
+
+            generateCSV(type, filteredData);
+            closeModal('modal-export');
+            showToast(`Berhasil mengekspor ${filteredData.length} data ${type}`);
+        }
+
+        function filterByPeriod(data, period, dateField) {
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            return data.filter(item => {
+                const itemDate = new Date(item[dateField]);
+                
+                switch(period) {
+                    case 'today':
+                        return itemDate >= startOfToday;
+                    case 'yesterday':
+                        const yesterday = new Date(startOfToday);
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        return itemDate >= yesterday && itemDate < startOfToday;
+                    case 'last30':
+                        const thirtyDaysAgo = new Date();
+                        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                        return itemDate >= thirtyDaysAgo;
+                    case 'lastMonth':
+                        const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                        const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+                        return itemDate >= firstDayLastMonth && itemDate <= lastDayLastMonth;
+                    case 'thisMonth':
+                        const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                        return itemDate >= firstDayThisMonth;
+                    case 'thisYear':
+                        const firstDayYear = new Date(now.getFullYear(), 0, 1);
+                        return itemDate >= firstDayYear;
+                    case 'custom':
+                        const start = new Date(document.getElementById('export-date-start').value);
+                        const end = new Date(document.getElementById('export-date-end').value);
+                        end.setHours(23, 59, 59);
+                        return itemDate >= start && itemDate <= end;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        function generateCSV(type, data) {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            let headers = [];
+            let rows = [];
+
+            if(type === 'products') {
+                headers = ["Nama Produk", "SKU", "Harga", "Stok", "Dibuat Pada"];
+                rows = data.map(i => [i.name, i.sku, i.price, i.stock, new Date(i.createdAt).toLocaleString()]);
+            } else if(type === 'sales') {
+                headers = ["Invoice", "Waktu", "Platform", "Total Item", "Total Harga"];
+                rows = data.map(i => [i.invoice, i.date, i.platform, i.itemsCount, i.total]);
+            } else if(type === 'suppliers') {
+                headers = ["Nama", "Kontak", "Alamat"];
+                rows = data.map(i => [i.name, i.phone, i.addr]);
+            } else if(type === 'customers') {
+                headers = ["Nama", "Kontak", "Poin"];
+                rows = data.map(i => [i.name, i.contact, i.points]);
+            } else if(type === 'finance') {
+                headers = ["Tanggal", "Kategori", "Keterangan", "Tipe", "Nominal"];
+                rows = data.map(i => [i.date, i.category, i.desc, i.type, i.amount]);
+            }
+
+            csvContent += headers.join(",") + "\r\n";
+            rows.forEach(row => {
+                csvContent += row.join(",") + "\r\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `PoetraNuri_${type}_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
 
         // --- CORE NAVIGATION ---
         function showPage(pageId) {
@@ -428,106 +565,10 @@
             if(pageId === 'suppliers') renderSuppliers();
             if(pageId === 'customers') renderCustomers();
             if(pageId === 'finance') renderFinance();
+            if(pageId === 'reports') renderReports();
             
             lucide.createIcons();
             if(window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full');
-        }
-
-        // --- EXPORT LOGIC ---
-        function openExportModal(type) {
-            document.getElementById('export-target-type').value = type;
-            openModal('modal-export');
-        }
-
-        function toggleCustomDate(val) {
-            const fields = document.getElementById('custom-date-fields');
-            if(val === 'custom') fields.classList.remove('hidden');
-            else fields.classList.add('hidden');
-        }
-
-        function isDateInRange(dateToCheck, period) {
-            const targetDate = new Date(dateToCheck);
-            const now = new Date();
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-            const yesterdayStart = todayStart - (24 * 60 * 60 * 1000);
-            
-            switch(period) {
-                case 'all': return true;
-                case 'today': return targetDate.getTime() >= todayStart;
-                case 'yesterday': return targetDate.getTime() >= yesterdayStart && targetDate.getTime() < todayStart;
-                case 'last30': return targetDate.getTime() >= (now.getTime() - (30 * 24 * 60 * 60 * 1000));
-                case 'lastmonth': {
-                    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-                    const endLastMonth = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-                    return targetDate >= lastMonth && targetDate <= endLastMonth;
-                }
-                case 'thismonth': {
-                    const firstDayMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                    return targetDate >= firstDayMonth;
-                }
-                case 'thisyear': {
-                    const firstDayYear = new Date(now.getFullYear(), 0, 1);
-                    return targetDate >= firstDayYear;
-                }
-                case 'custom': {
-                    const startInput = document.getElementById('export-start-date').value;
-                    const endInput = document.getElementById('export-end-date').value;
-                    if(!startInput || !endInput) return true;
-                    const startDate = new Date(startInput).getTime();
-                    const endDate = new Date(endInput).setHours(23,59,59,999);
-                    return targetDate.getTime() >= startDate && targetDate.getTime() <= endDate;
-                }
-                default: return true;
-            }
-        }
-
-        function processExport() {
-            const type = document.getElementById('export-target-type').value;
-            const period = document.getElementById('export-period').value;
-            let data = db[type] || [];
-            
-            // Filter data berdasarkan periode
-            const filteredData = data.filter(item => {
-                const dateToCompare = item.createdAt || item.rawDate;
-                return isDateInRange(dateToCompare, period);
-            });
-
-            if(filteredData.length === 0) {
-                showToast("Tidak ada data ditemukan untuk periode ini", "error");
-                return;
-            }
-
-            // CSV Generation
-            let csv = "";
-            let filename = `poetranuri_${type}_${period}_${new Date().toISOString().slice(0,10)}.csv`;
-
-            if(type === 'products') {
-                csv = "ID,Nama Produk,SKU,Harga,Stok,Tgl Input\n";
-                filteredData.forEach(p => { csv += `${p.id},${p.name},${p.sku},${p.price},${p.stock},${p.createdAt}\n`; });
-            } else if(type === 'sales') {
-                csv = "ID,Tgl,Invoice,Platform,Total\n";
-                filteredData.forEach(s => { csv += `${s.id},${s.date},${s.invoice},${s.platform},${s.total}\n`; });
-            } else if(type === 'suppliers') {
-                csv = "ID,Nama,Kontak,Alamat\n";
-                filteredData.forEach(s => { csv += `${s.id},${s.name},${s.phone},${s.addr}\n`; });
-            } else if(type === 'customers') {
-                csv = "ID,Nama,Kontak,Poin\n";
-                filteredData.forEach(c => { csv += `${c.id},${c.name},${c.contact},${c.points}\n`; });
-            } else if(type === 'finance') {
-                csv = "ID,Tgl,Kategori,Keterangan,Nominal,Tipe\n";
-                filteredData.forEach(f => { csv += `${f.id},${f.date},${f.category},${f.desc},${f.amount},${f.type}\n`; });
-            }
-
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            closeModal('modal-export');
-            showToast("Data berhasil dieksport!");
         }
 
         // --- DASHBOARD ---
@@ -540,10 +581,78 @@
             document.getElementById('stat-balance').innerText = `Rp ${currentBalance.toLocaleString()}`;
         }
 
-        // --- POS LOGIC ---
+        // --- SUPPLIERS & CUSTOMERS LOGIC ---
+        function renderSuppliers() {
+            const body = document.getElementById('supplier-list');
+            body.innerHTML = db.suppliers.map(s => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 font-bold text-sm">${s.name}</td>
+                    <td class="px-6 py-4 text-sm">${s.phone}</td>
+                    <td class="px-6 py-4 text-xs">${s.addr}</td>
+                    <td class="px-6 py-4 flex gap-2">
+                        <button onclick="editItem('suppliers', ${s.id})" class="text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="deleteItem('suppliers', ${s.id})" class="text-red-400 hover:bg-red-50 p-2 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function saveSupplier() {
+            const id = document.getElementById('s-id').value;
+            const name = document.getElementById('s-name').value;
+            const phone = document.getElementById('s-phone').value;
+            const addr = document.getElementById('s-addr').value;
+            if(!name) return alert('Nama wajib diisi');
+            if(id) {
+                const idx = db.suppliers.findIndex(x => x.id == id);
+                db.suppliers[idx] = { ...db.suppliers[idx], name, phone, addr };
+            } else {
+                db.suppliers.unshift({ id: Date.now(), name, phone, addr, createdAt: new Date() });
+            }
+            closeModal('modal-supplier');
+            renderSuppliers();
+            showToast('Data Supplier Tersimpan');
+        }
+
+        function renderCustomers() {
+            const body = document.getElementById('customer-list');
+            body.innerHTML = db.customers.map(c => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 font-bold text-sm">${c.name}</td>
+                    <td class="px-6 py-4 text-sm">${c.contact}</td>
+                    <td class="px-6 py-4 font-black text-yellow-600">${c.points} Pts</td>
+                    <td class="px-6 py-4 flex gap-2">
+                        <button onclick="editItem('customers', ${c.id})" class="text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="deleteItem('customers', ${c.id})" class="text-red-400 hover:bg-red-50 p-2 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function saveCustomer() {
+            const id = document.getElementById('c-id').value;
+            const name = document.getElementById('c-name').value;
+            const contact = document.getElementById('c-contact').value;
+            const points = parseInt(document.getElementById('c-points').value || 0);
+            if(!name) return alert('Nama wajib diisi');
+            if(id) {
+                const idx = db.customers.findIndex(x => x.id == id);
+                db.customers[idx] = { ...db.customers[idx], name, contact, points };
+            } else {
+                db.customers.unshift({ id: Date.now(), name, contact, points, createdAt: new Date() });
+            }
+            closeModal('modal-customer');
+            renderCustomers();
+            showToast('Data Customer Tersimpan');
+        }
+
+        // --- POS & KASIR ---
         function renderPOS(platform = 'all') {
             currentPlatform = platform === 'all' ? 'umum' : platform;
             document.getElementById('pos-platform').innerText = currentPlatform;
+            
             const grid = document.getElementById('pos-grid');
             grid.innerHTML = db.products.filter(p => p.stock > 0).map(p => `
                 <div onclick="addToCart(${p.id})" class="bg-white p-4 rounded-2xl border border-slate-100 hover:border-slate-900 cursor-pointer shadow-sm hover:shadow-md transition active:scale-95">
@@ -566,7 +675,7 @@
         function renderCart() {
             const list = document.getElementById('pos-cart');
             let total = 0;
-            if(cart.length === 0) list.innerHTML = `<p class="text-center py-10 text-slate-300 text-xs italic">Belum ada item dipilih</p>`;
+            if(cart.length === 0) { list.innerHTML = `<p class="text-center py-10 text-slate-300 text-xs italic">Belum ada item dipilih</p>`; }
             else {
                 list.innerHTML = cart.map(item => {
                     total += (item.price * item.qty);
@@ -582,38 +691,97 @@
             const now = new Date();
             const invoiceNo = 'INV-' + now.getTime().toString().slice(-6);
             const totalAmount = cart.reduce((a, b) => a + (b.price * b.qty), 0);
+            const itemsCount = cart.reduce((a, b) => a + b.qty, 0);
 
             cart.forEach(item => {
                 const prod = db.products.find(p => p.id === item.id);
                 if(prod) prod.stock -= item.qty;
             });
 
-            db.sales.unshift({
+            const newSale = {
                 id: Date.now(),
                 rawDate: now,
                 date: now.toLocaleString('id-ID'),
                 invoice: invoiceNo,
-                itemsCount: cart.length,
+                itemsCount: itemsCount,
                 platform: currentPlatform,
-                total: totalAmount,
-                createdAt: now
-            });
+                total: totalAmount
+            };
+            db.sales.unshift(newSale);
 
             db.finance.unshift({
                 id: Date.now() + 1,
                 rawDate: now,
                 date: now.toLocaleString('id-ID'),
                 category: 'Penjualan',
-                desc: `Kasir: ${invoiceNo} (${currentPlatform})`,
+                desc: `Penjualan ${currentPlatform.toUpperCase()} ${invoiceNo}`,
                 amount: totalAmount,
                 type: 'IN',
-                createdAt: now
+                invoiceRef: invoiceNo
             });
 
-            cart = []; renderCart(); renderPOS('all'); showToast(`Berhasil! ${invoiceNo} tersimpan`);
+            cart = [];
+            renderCart();
+            renderPOS('all');
+            showToast(`Checkout ${currentPlatform} Berhasil!`);
         }
 
-        // --- RENDER FUNCTIONS ---
+        function renderSalesHistory() {
+            const list = document.getElementById('sales-history-list');
+            document.getElementById('total-sales-count').innerText = `${db.sales.length} Transaksi`;
+            list.innerHTML = db.sales.map(s => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-6 py-4 text-xs text-slate-500">${s.date}</td>
+                    <td class="px-6 py-4 font-mono font-bold text-slate-900">${s.invoice}</td>
+                    <td class="px-6 py-4 text-sm">${s.itemsCount} Item</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.platform === 'shopee' ? 'bg-orange-100 text-orange-600' : s.platform === 'tiktok' ? 'bg-black text-white' : 'bg-slate-100 text-slate-500'} uppercase">
+                            ${s.platform}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 font-black text-slate-900">Rp ${s.total.toLocaleString()}</td>
+                    <td class="px-6 py-4">
+                        <button onclick="deleteItem('sales', ${s.id})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // --- SHARED UTILS (EDIT/DELETE) ---
+        function deleteItem(type, id) {
+            if(confirm('Yakin ingin menghapus data ini?')) {
+                db[type] = db[type].filter(x => x.id != id);
+                showPage(type);
+                showToast('Data dihapus');
+            }
+        }
+
+        function editItem(type, id) {
+            const item = db[type].find(x => x.id == id);
+            if(type === 'products') {
+                document.getElementById('p-id').value = item.id;
+                document.getElementById('p-name').value = item.name;
+                document.getElementById('p-sku').value = item.sku;
+                document.getElementById('p-price').value = item.price;
+                document.getElementById('p-stock').value = item.stock;
+                openModal('modal-product');
+            } else if(type === 'suppliers') {
+                document.getElementById('s-id').value = item.id;
+                document.getElementById('s-name').value = item.name;
+                document.getElementById('s-phone').value = item.phone;
+                document.getElementById('s-addr').value = item.addr;
+                openModal('modal-supplier');
+            } else if(type === 'customers') {
+                document.getElementById('c-id').value = item.id;
+                document.getElementById('c-name').value = item.name;
+                document.getElementById('c-contact').value = item.contact;
+                document.getElementById('c-points').value = item.points;
+                openModal('modal-customer');
+            }
+        }
+
+        // --- PRODUCTS & FINANCE ---
         function renderProducts() {
             const body = document.getElementById('product-list');
             body.innerHTML = db.products.map(p => `
@@ -623,8 +791,8 @@
                     <td class="px-6 py-4 font-semibold">${p.stock}</td>
                     <td class="px-6 py-4 font-semibold">Rp ${p.price.toLocaleString()}</td>
                     <td class="px-6 py-4 flex gap-2">
-                        <button onclick="editItem('products', ${p.id})" class="text-blue-500 p-2"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                        <button onclick="deleteItem('products', ${p.id})" class="text-red-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick="editItem('products', ${p.id})" class="text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="deleteItem('products', ${p.id})" class="text-red-400 hover:bg-red-50 p-2 rounded-lg transition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </td>
                 </tr>
             `).join('');
@@ -647,52 +815,6 @@
             closeModal('modal-product'); renderProducts(); showToast('Produk Disimpan');
         }
 
-        function renderSalesHistory() {
-            const list = document.getElementById('sales-history-list');
-            document.getElementById('total-sales-count').innerText = `${db.sales.length} Transaksi`;
-            list.innerHTML = db.sales.map(s => `
-                <tr class="hover:bg-slate-50 transition">
-                    <td class="px-6 py-4 text-xs text-slate-500">${s.date}</td>
-                    <td class="px-6 py-4 font-mono font-bold text-slate-900">${s.invoice}</td>
-                    <td class="px-6 py-4 text-sm">${s.itemsCount} Item</td>
-                    <td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.platform === 'shopee' ? 'bg-orange-100 text-orange-600' : s.platform === 'tiktok' ? 'bg-black text-white' : 'bg-slate-100 text-slate-500'} uppercase">${s.platform}</span></td>
-                    <td class="px-6 py-4 font-black text-slate-900">Rp ${s.total.toLocaleString()}</td>
-                    <td class="px-6 py-4"><button onclick="deleteItem('sales', ${s.id})" class="text-red-300 hover:text-red-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
-                </tr>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        function renderSuppliers() {
-            const body = document.getElementById('supplier-list');
-            body.innerHTML = db.suppliers.map(s => `
-                <tr class="hover:bg-slate-50 transition"><td class="px-6 py-4 font-bold text-sm">${s.name}</td><td class="px-6 py-4 text-sm">${s.phone}</td><td class="px-6 py-4 text-xs">${s.addr}</td><td class="px-6 py-4 flex gap-2"><button onclick="editItem('suppliers', ${s.id})" class="text-blue-500"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="deleteItem('suppliers', ${s.id})" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>
-            `).join(''); lucide.createIcons();
-        }
-
-        function saveSupplier() {
-            const name = document.getElementById('s-name').value;
-            const phone = document.getElementById('s-phone').value;
-            const addr = document.getElementById('s-addr').value;
-            if(!name) return;
-            db.suppliers.unshift({ id: Date.now(), name, phone, addr, createdAt: new Date() });
-            closeModal('modal-supplier'); renderSuppliers(); showToast('Supplier Tersimpan');
-        }
-
-        function renderCustomers() {
-            const body = document.getElementById('customer-list');
-            body.innerHTML = db.customers.map(c => `<tr class="hover:bg-slate-50 transition"><td class="px-6 py-4 font-bold text-sm">${c.name}</td><td class="px-6 py-4 text-sm">${c.contact}</td><td class="px-6 py-4 font-black text-yellow-600">${c.points} Pts</td><td class="px-6 py-4 flex gap-2"><button onclick="editItem('customers', ${c.id})" class="text-blue-500"><i data-lucide="edit-3" class="w-4 h-4"></i></button><button onclick="deleteItem('customers', ${c.id})" class="text-red-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td></tr>`).join(''); lucide.createIcons();
-        }
-
-        function saveCustomer() {
-            const name = document.getElementById('c-name').value;
-            const contact = document.getElementById('c-contact').value;
-            const points = parseInt(document.getElementById('c-points').value || 0);
-            if(!name) return;
-            db.customers.unshift({ id: Date.now(), name, contact, points, createdAt: new Date() });
-            closeModal('modal-customer'); renderCustomers(); showToast('Customer Tersimpan');
-        }
-
         function renderFinance() {
             const list = document.getElementById('finance-list');
             const income = db.finance.filter(f => f.type === 'IN').reduce((a, b) => a + b.amount, 0);
@@ -705,34 +827,55 @@
                     <td class="px-6 py-4 text-xs font-bold uppercase text-slate-400">${f.category}</td>
                     <td class="px-6 py-4 text-sm">${f.desc}</td>
                     <td class="px-6 py-4 font-bold ${f.type === 'IN' ? 'text-green-600' : 'text-red-600'}">Rp ${f.amount.toLocaleString()}</td>
-                    <td class="px-6 py-4 text-[10px]"><span class="px-2 py-1 rounded-full font-bold ${f.type === 'IN' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}">${f.type}</span></td>
-                    <td class="px-6 py-4"><button onclick="deleteItem('finance', ${f.id})" class="text-slate-300"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold ${f.type === 'IN' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${f.type === 'IN' ? 'MASUK' : 'KELUAR'}</span></td>
+                    <td class="px-6 py-4"><button onclick="deleteItem('finance', ${f.id})" class="text-slate-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button></td>
                 </tr>
-            `).join(''); lucide.createIcons();
+            `).join('');
+            lucide.createIcons();
         }
 
         function saveFinance() {
             const desc = document.getElementById('f-desc').value;
-            const cat = document.getElementById('f-category').value;
+            const category = document.getElementById('f-category').value;
             const amount = parseInt(document.getElementById('f-amount').value);
             if(!desc || isNaN(amount)) return;
             const now = new Date();
-            db.finance.unshift({ id: Date.now(), rawDate: now, date: now.toLocaleString('id-ID'), category: cat, desc, amount, type: 'OUT', createdAt: now });
+            db.finance.unshift({ id: Date.now(), rawDate: now, date: now.toLocaleString('id-ID'), category, desc, amount, type: 'OUT' });
             closeModal('modal-finance'); renderFinance(); showToast('Pengeluaran Dicatat');
         }
 
-        // --- UTILS ---
-        function showToast(msg, type = 'success') {
+        function renderReports() {
+            const incomeSales = db.finance.filter(f => f.type === 'IN' && f.category === 'Penjualan').reduce((a, b) => a + b.amount, 0);
+            const expenseOthers = db.finance.filter(f => f.type === 'OUT' && f.category !== 'Pembelian Stok').reduce((a, b) => a + b.amount, 0);
+            const expenseInv = db.finance.filter(f => f.type === 'OUT' && f.category === 'Pembelian Stok').reduce((a, b) => a + b.amount, 0);
+            const netProfit = incomeSales - (expenseOthers + expenseInv);
+            document.getElementById('rep-income-sales').innerText = `Rp ${incomeSales.toLocaleString()}`;
+            document.getElementById('rep-total-income').innerText = `Rp ${incomeSales.toLocaleString()}`;
+            document.getElementById('rep-expense-inv').innerText = `Rp ${expenseInv.toLocaleString()}`;
+            document.getElementById('rep-expense-others').innerText = `Rp ${expenseOthers.toLocaleString()}`;
+            document.getElementById('rep-total-expense').innerText = `Rp ${(expenseOthers + expenseInv).toLocaleString()}`;
+            const profitEl = document.getElementById('rep-net-profit');
+            profitEl.innerText = `Rp ${netProfit.toLocaleString()}`;
+            profitEl.className = `text-3xl font-black ${netProfit >= 0 ? 'text-yellow-500' : 'text-red-500'}`;
+        }
+
+        function showToast(msg) {
             const container = document.getElementById('toast-container');
             const t = document.createElement('div');
-            t.className = `px-6 py-3 rounded-xl shadow-xl animate-slide-in flex items-center gap-2 border-l-4 ${type === 'success' ? 'bg-slate-900 text-white border-yellow-500' : 'bg-red-600 text-white border-white'}`;
-            t.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}" class="w-4 h-4"></i><span class="text-sm font-bold">${msg}</span>`;
-            container.appendChild(t); lucide.createIcons(); setTimeout(() => t.remove(), 3000);
+            t.className = "bg-slate-900 text-white px-6 py-3 rounded-xl shadow-xl animate-slide-in flex items-center gap-2 border-l-4 border-yellow-500";
+            t.innerHTML = `<i data-lucide="check-circle" class="w-4 h-4 text-yellow-500"></i><span class="text-sm font-bold">${msg}</span>`;
+            container.appendChild(t); lucide.createIcons();
+            setTimeout(() => t.remove(), 3000);
         }
 
         function removeFromCart(id) { cart = cart.filter(x => x.id !== id); renderCart(); }
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function closeModal(id) { 
+            document.getElementById(id).classList.add('hidden');
+            const inputs = document.getElementById(id).querySelectorAll('input');
+            inputs.forEach(i => i.value = i.type === 'number' ? 0 : '');
+        }
+
         function filterTable(id, col) {
             let q = document.getElementById('search-product').value.toLowerCase();
             let rows = document.getElementById(id).rows;
