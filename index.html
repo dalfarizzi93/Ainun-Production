@@ -1,540 +1,679 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { initializeApp } from 'firebase/app';
-import { 
-  getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, 
-  onSnapshot, query, orderBy, serverTimestamp, getDoc, setDoc 
-} from 'firebase/firestore';
-import { 
-  getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged 
-} from 'firebase/auth';
-import { 
-  LayoutDashboard, Package, Warehouse, ShoppingCart, TrendingUp, Users, 
-  DollarSign, FileText, Settings, Bell, Search, Menu, X, Plus, 
-  Download, ArrowUpRight, ArrowDownRight, Briefcase, Cpu, 
-  History, ShieldCheck, Zap, Sparkles, BrainCircuit, Loader2, 
-  Trash2, Edit3, BarChart3, Receipt, UserPlus, HardDrive, 
-  Truck, CreditCard, Activity, Layers, Globe
-} from 'lucide-react';
-
-// --- CONFIGURASI FIREBASE ---
-const firebaseConfig = JSON.parse(__firebase_config);
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'poetranuri-erp-ultimate';
-const apiKey = ""; 
-
-// --- KONFIGURASI TEMA ---
-const THEME = {
-  primary: '#1E3A8A', // Blue Premium
-  gold: '#D4AF37',    // Gold Soft
-  bg: '#F8FAFC',
-  glass: 'bg-white/90 backdrop-blur-xl border border-white/20 shadow-2xl'
-};
-
-// --- HELPER COMPONENTS ---
-const Badge = ({ children, color = "blue" }) => {
-  const colors = {
-    blue: "bg-blue-50 text-blue-700 border-blue-100",
-    gold: "bg-amber-50 text-amber-700 border-amber-100",
-    green: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    red: "bg-rose-50 text-rose-700 border-rose-100"
-  };
-  return (
-    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${colors[color]}`}>
-      {children}
-    </span>
-  );
-};
-
-const FormInput = ({ label, ...props }) => (
-  <div>
-    <label className="text-[10px] font-black text-slate-400 uppercase ml-2 mb-1 block tracking-widest">{label}</label>
-    <input 
-      {...props}
-      className={`w-full p-4 bg-slate-50 border-none rounded-2xl text-sm font-semibold focus:ring-2 ring-blue-500/10 transition-all ${props.readOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
-    />
-  </div>
-);
-
-// --- MAIN APPLICATION ---
-export default function App() {
-  const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [collapsed, setCollapsed] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Data States
-  const [inventory, setInventory] = useState([]);
-  const [activities, setActivities] = useState([]);
-  const [transactions, setTransactions] = useState([]);
-
-  // UI States
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState('inventory');
-
-  // 1. Firebase Auth
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PoetraNuri.com - Enterprise Warehouse ERP</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Icons & Charts -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .dark .glass { background: rgba(15, 23, 42, 0.7); }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' }
+                    }
+                }
+            }
         }
-      } catch (e) { console.error("Auth Error", e); }
-    };
-    initAuth();
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
+    </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+    <div id="root"></div>
 
-  // 2. Real-time Sync
-  useEffect(() => {
-    if (!user) return;
-    const qInv = query(collection(db, 'artifacts', appId, 'public', 'data', 'inventory'), orderBy('createdAt', 'desc'));
-    const qAct = query(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), orderBy('timestamp', 'desc'));
-    const qTrans = query(collection(db, 'artifacts', appId, 'public', 'data', 'transactions'), orderBy('timestamp', 'desc'));
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
 
-    const unsubInv = onSnapshot(qInv, (s) => setInventory(s.docs.map(d => ({id: d.id, ...d.data()}))), (e) => console.error(e));
-    const unsubAct = onSnapshot(qAct, (s) => setActivities(s.docs.map(d => ({id: d.id, ...d.data()})).slice(0, 10)), (e) => console.error(e));
-    const unsubTrans = onSnapshot(qTrans, (s) => setTransactions(s.docs.map(d => ({id: d.id, ...d.data()}))), (e) => console.error(e));
+        // --- MOCK DATA & HELPERS ---
+        const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
-    return () => { unsubInv(); unsubAct(); unsubTrans(); };
-  }, [user]);
-
-  // Actions
-  const logActivity = async (message, type = 'info') => {
-    if (!user) return;
-    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'activities'), {
-      message, type, timestamp: serverTimestamp(), userId: user.uid
-    });
-  };
-
-  const handleAddData = async (data) => {
-    try {
-      const coll = modalType === 'inventory' ? 'inventory' : 'transactions';
-      await addDoc(collection(db, 'artifacts', appId, 'public', 'data', coll), {
-        ...data,
-        createdAt: serverTimestamp(),
-        timestamp: serverTimestamp(),
-        userId: user.uid
-      });
-      logActivity(`Menambahkan ${modalType}: ${data.name || data.invoice}`, 'success');
-      setIsModalOpen(false);
-    } catch (e) { console.error(e); }
-  };
-
-  const handleDelete = async (id, name, coll) => {
-    if (!window.confirm(`Hapus ${name}?`)) return;
-    try {
-      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', coll, id));
-      logActivity(`Menghapus ${coll}: ${name}`, 'warning');
-    } catch (e) { console.error(e); }
-  };
-
-  if (isLoading) return (
-    <div className="h-screen w-screen flex flex-col items-center justify-center bg-white">
-      <div className="w-16 h-16 border-4 border-slate-100 border-t-blue-900 rounded-full animate-spin mb-4"></div>
-      <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-400">PoetraNuri System Loading</p>
-    </div>
-  );
-
-  return (
-    <div className="flex h-screen overflow-hidden bg-[#F8FAFC] text-slate-900 font-sans">
-      {/* SIDEBAR */}
-      <aside className={`transition-all duration-500 ease-in-out border-r border-slate-200 bg-white flex flex-col z-40 ${collapsed ? 'w-20' : 'w-72'}`}>
-        <div className="p-6 flex items-center mb-4">
-          <div className="bg-blue-900 p-2.5 rounded-2xl text-white shadow-xl shadow-blue-900/20">
-            <Warehouse size={24} />
-          </div>
-          {!collapsed && (
-            <div className="ml-3 animate-in fade-in slide-in-from-left-4">
-              <h1 className="font-black text-xl tracking-tighter text-blue-900 leading-none">POETRA<span className="text-[#D4AF37]">NURI</span></h1>
-              <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Enterprise Cloud v3.0</p>
+        // --- COMPONENTS ---
+        const Card = ({ children, className = "" }) => (
+            <div className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 ${className}`}>
+                {children}
             </div>
-          )}
-        </div>
+        );
 
-        <nav className="flex-1 px-4 space-y-1 overflow-y-auto pb-10">
-          <p className={`text-[9px] font-black text-slate-300 uppercase px-3 py-2 tracking-widest ${collapsed ? 'text-center' : ''}`}>Main Menu</p>
-          <NavItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} collapsed={collapsed} />
-          
-          <p className={`text-[9px] font-black text-slate-300 uppercase px-3 py-2 mt-4 tracking-widest ${collapsed ? 'text-center' : ''}`}>Warehouse</p>
-          <NavItem icon={Package} label="Inventaris" active={activeTab === 'inventory'} onClick={() => setActiveTab('inventory')} collapsed={collapsed} />
-          <NavItem icon={History} label="Mutasi Stok" active={activeTab === 'stock'} onClick={() => setActiveTab('stock')} collapsed={collapsed} />
-          
-          <p className={`text-[9px] font-black text-slate-300 uppercase px-3 py-2 mt-4 tracking-widest ${collapsed ? 'text-center' : ''}`}>Operations</p>
-          <NavItem icon={ShoppingCart} label="Pembelian" active={activeTab === 'purchase'} onClick={() => setActiveTab('purchase')} collapsed={collapsed} />
-          <NavItem icon={TrendingUp} label="Penjualan" active={activeTab === 'sales'} onClick={() => setActiveTab('sales')} collapsed={collapsed} />
-          <NavItem icon={DollarSign} label="Keuangan" active={activeTab === 'finance'} onClick={() => setActiveTab('finance')} collapsed={collapsed} />
-          
-          <p className={`text-[9px] font-black text-slate-300 uppercase px-3 py-2 mt-4 tracking-widest ${collapsed ? 'text-center' : ''}`}>Admin</p>
-          <NavItem icon={Users} label="CRM" active={activeTab === 'crm'} onClick={() => setActiveTab('crm')} collapsed={collapsed} />
-          <NavItem icon={Briefcase} label="SDM & Payroll" active={activeTab === 'hr'} onClick={() => setActiveTab('hr')} collapsed={collapsed} />
-          <NavItem icon={BarChart3} label="Laporan" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} collapsed={collapsed} />
-          <NavItem icon={Settings} label="Pengaturan" active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} collapsed={collapsed} />
-        </nav>
-      </aside>
+        const Badge = ({ children, color = "blue" }) => {
+            const variants = {
+                blue: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                emerald: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                amber: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                rose: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+                purple: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+            };
+            return <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${variants[color] || variants.blue}`}>{children}</span>;
+        };
 
-      {/* MAIN */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-20 bg-white/70 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between z-30">
-          <div className="flex items-center space-x-6">
-            <button onClick={() => setCollapsed(!collapsed)} className="p-2.5 hover:bg-slate-50 rounded-xl text-slate-400 transition-all">
-              <Menu size={20} />
-            </button>
-          </div>
+        // --- CHART COMPONENT ---
+        const CombinedChart = ({ type = 'line', data, labels }) => {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden md:flex flex-col items-end mr-4">
-              <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest leading-none">Global Sync</span>
-              <span className="text-[10px] font-bold text-emerald-500 flex items-center mt-1">
-                <ShieldCheck size={12} className="mr-1" /> Terkoneksi
-              </span>
+            useEffect(() => {
+                const ctx = chartRef.current.getContext('2d');
+                if (chartInstance.current) chartInstance.current.destroy();
+                chartInstance.current = new Chart(ctx, {
+                    type,
+                    data: {
+                        labels,
+                        datasets: data.map(d => ({
+                            ...d,
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 3
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: { size: 10 } } } },
+                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.03)' } }, x: { grid: { display: false } } }
+                    }
+                });
+                return () => chartInstance.current?.destroy();
+            }, [data, labels, type]);
+
+            return <canvas ref={chartRef}></canvas>;
+        };
+
+        // --- VIEW: DASHBOARD ---
+        const DashboardView = () => (
+            <div className="space-y-6 fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    <Card className="border-b-4 border-blue-500">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Total Produk</p>
+                        <h3 className="text-xl font-black dark:text-white">4,281</h3>
+                    </Card>
+                    <Card className="border-b-4 border-emerald-500">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Masuk Hari Ini</p>
+                        <h3 className="text-xl font-black text-emerald-600">+142</h3>
+                    </Card>
+                    <Card className="border-b-4 border-rose-500">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Keluar Hari Ini</p>
+                        <h3 className="text-xl font-black text-rose-600">-89</h3>
+                    </Card>
+                    <Card className="border-b-4 border-amber-500">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Stok Menipis</p>
+                        <h3 className="text-xl font-black text-amber-500">14</h3>
+                    </Card>
+                    <Card className="border-b-4 border-indigo-500">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Total Supplier</p>
+                        <h3 className="text-xl font-black dark:text-white">82</h3>
+                    </Card>
+                    <Card className="border-b-4 border-purple-500">
+                        <p className="text-[10px] text-slate-500 font-bold uppercase">Total Customer</p>
+                        <h3 className="text-xl font-black dark:text-white">1.2K</h3>
+                    </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <Card className="lg:col-span-2 h-[400px]">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold dark:text-white">Analisis Performa Gudang</h3>
+                            <Badge color="emerald">Realtime Update</Badge>
+                        </div>
+                        <div className="h-[300px]">
+                            <CombinedChart 
+                                type="line"
+                                labels={['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun']}
+                                data={[
+                                    { label: 'Penjualan', data: [45, 52, 48, 70, 65, 85], borderColor: '#3b82f6', backgroundColor: 'transparent' },
+                                    { label: 'Stok Opname', data: [30, 40, 35, 50, 45, 60], borderColor: '#10b981', backgroundColor: 'transparent' }
+                                ]}
+                            />
+                        </div>
+                    </Card>
+                    <div className="space-y-4">
+                        <Card>
+                            <h4 className="font-bold text-sm mb-4 dark:text-white">Notifikasi AI & Stok</h4>
+                            <div className="space-y-3">
+                                <div className="flex gap-3 p-2 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-900/20">
+                                    <i data-lucide="alert-triangle" className="w-4 h-4 text-amber-500 shrink-0"></i>
+                                    <p className="text-xs text-amber-800 dark:text-amber-200"><b>Stok Kritis:</b> MacBook Pro M3 sisa 2 unit. Prediksi habis dalam 2 hari.</p>
+                                </div>
+                                <div className="flex gap-3 p-2 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/20">
+                                    <i data-lucide="sparkles" className="w-4 h-4 text-blue-500 shrink-0"></i>
+                                    <p className="text-xs text-blue-800 dark:text-blue-200"><b>Smart Suggest:</b> Segera restock Monitor Dell. Supplier "Mega Tech" sedang promo 10%.</p>
+                                </div>
+                            </div>
+                        </Card>
+                        <Card className="flex-1">
+                            <h4 className="font-bold text-sm mb-4 dark:text-white">Aktivitas Terbaru</h4>
+                            <div className="space-y-4 max-h-[140px] overflow-y-auto custom-scrollbar pr-2">
+                                {[
+                                    { msg: "Staff Budi melakukan stok masuk PN-001", time: "2m ago" },
+                                    { msg: "Sales Order #INV-882 disetujui", time: "15m ago" },
+                                    { msg: "Transfer gudang B ke gudang A", time: "1h ago" }
+                                ].map((act, i) => (
+                                    <div key={i} className="flex justify-between items-start gap-2 text-[11px]">
+                                        <span className="text-slate-600 dark:text-slate-400">• {act.msg}</span>
+                                        <span className="text-slate-400 shrink-0 italic">{act.time}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    </div>
+                </div>
             </div>
-            <button 
-              onClick={() => { setModalType('inventory'); setIsModalOpen(true); }}
-              className="bg-blue-900 text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-900/20 hover:scale-105 active:scale-95 transition-all flex items-center"
-            >
-              <Plus size={16} className="mr-2 text-[#D4AF37]" /> Tambah Data
-            </button>
-          </div>
-        </header>
+        );
 
-        <div className="flex-1 overflow-y-auto p-8">
-          <ViewRouter 
-            activeTab={activeTab} 
-            inventory={inventory} 
-            activities={activities} 
-            transactions={transactions} 
-            handleDelete={handleDelete}
-            setActiveTab={setActiveTab}
-          />
-        </div>
-      </main>
-
-      {isModalOpen && (
-        <ModalForm 
-          type={modalType} 
-          onClose={() => setIsModalOpen(false)} 
-          onSubmit={handleAddData} 
-        />
-      )}
-    </div>
-  );
-}
-
-// --- VIEW ROUTER (MODUL AKTIF) ---
-function ViewRouter({ activeTab, ...props }) {
-  switch(activeTab) {
-    case 'dashboard': return <DashboardView {...props} />;
-    case 'inventory': return <InventoryView {...props} />;
-    case 'sales': return <SalesView {...props} />;
-    case 'finance': return <FinanceView {...props} />;
-    case 'reports': return <ReportsView {...props} />;
-    case 'stock': return <StockMutationView {...props} />;
-    case 'purchase': return <PurchaseView {...props} />;
-    case 'crm': return <CRMView {...props} />;
-    case 'hr': return <HRView {...props} />;
-    case 'settings': return <SettingsView {...props} />;
-    default: return <DashboardView {...props} />;
-  }
-}
-
-// --- NAV ITEM COMPONENT ---
-const NavItem = ({ icon: Icon, label, active, onClick, collapsed }) => (
-  <button 
-    onClick={onClick} 
-    className={`w-full flex items-center p-3.5 rounded-2xl transition-all duration-300 group ${
-      active 
-        ? 'bg-blue-900 text-white shadow-xl shadow-blue-900/20' 
-        : 'text-slate-400 hover:bg-slate-50 hover:text-blue-900'
-    }`}
-  >
-    <div className={`${active ? 'text-[#D4AF37]' : 'group-hover:scale-110'} transition-transform`}>
-      <Icon size={18} />
-    </div>
-    {!collapsed && (
-      <span className={`ml-3.5 text-[11px] font-black uppercase tracking-wider ${active ? 'opacity-100' : 'opacity-70'}`}>
-        {label}
-      </span>
-    )}
-  </button>
-);
-
-// --- VIEW COMPONENTS ---
-
-const DashboardView = ({ inventory, activities, transactions, setActiveTab }) => {
-  const totalStock = useMemo(() => inventory.reduce((a, b) => a + Number(b.stock || 0), 0), [inventory]);
-  const totalVal = useMemo(() => inventory.reduce((a, b) => a + (Number(b.stock || 0) * Number(b.price || 0)), 0), [inventory]);
-
-  return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="mb-10">
-        <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight italic uppercase">
-          Ringkasan <span className="text-blue-900">Operasional</span>
-        </h2>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
-        <StatCard title="Total Produk" value={inventory.length} icon={Package} trend={12} color="bg-blue-600" />
-        <StatCard title="Kapasitas Stok" value={totalStock} icon={Warehouse} trend={5} color="bg-indigo-600" />
-        <StatCard title="Valuasi Aset" value={`Rp ${totalVal.toLocaleString()}`} icon={DollarSign} trend={8} color="bg-amber-500" />
-        <StatCard title="Order Masuk" value={transactions.length} icon={ShoppingCart} trend={24} color="bg-emerald-500" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        <div className={`lg:col-span-2 p-10 rounded-[3rem] ${THEME.glass}`}>
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xl font-black text-blue-900 italic">INVENTARIS <span className="text-slate-800">POPULER</span></h3>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-left border-b border-slate-100">
-                  <th className="pb-4 text-[10px] font-black text-slate-400 uppercase">Produk</th>
-                  <th className="pb-4 text-[10px] font-black text-slate-400 uppercase text-center">Status</th>
-                  <th className="pb-4 text-[10px] font-black text-slate-400 uppercase text-right">Stok</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {inventory.slice(0, 5).map((item) => (
-                  <tr key={item.id}>
-                    <td className="py-5 flex items-center">
-                      <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center mr-4 text-blue-900 font-black">{item.name?.charAt(0)}</div>
-                      <span className="text-sm font-black text-slate-800">{item.name}</span>
-                    </td>
-                    <td className="py-5 text-center"><Badge color={item.stock < 10 ? 'red' : 'green'}>{item.stock < 10 ? 'Low' : 'Ready'}</Badge></td>
-                    <td className="py-5 text-right font-black text-sm text-slate-700">{item.stock}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className={`p-8 rounded-[3rem] ${THEME.glass}`}>
-          <h3 className="text-lg font-black text-blue-900 mb-6 flex items-center"><History size={20} className="mr-3 text-[#D4AF37]" /> Log Aktivitas</h3>
-          <div className="space-y-6">
-            {activities.map((act) => (
-              <div key={act.id} className="flex items-start space-x-4 border-l-2 border-slate-100 pl-4 py-1">
-                <div className="flex-1">
-                  <p className="text-xs font-bold text-slate-700 leading-snug">{act.message}</p>
-                  <p className="text-[9px] text-slate-400 font-black uppercase mt-1">Sistem Otomatis</p>
+        // --- VIEW: MASTER DATA ---
+        const MasterDataView = () => (
+            <div className="space-y-6 fade-in">
+                <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div className="relative flex-1 max-w-md">
+                        <i data-lucide="search" className="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
+                        <input type="text" placeholder="Cari SKU, Nama, atau Barcode..." className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+                    </div>
+                    <div className="flex gap-2">
+                        <button className="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-bold flex items-center gap-2">
+                            <i data-lucide="download" className="w-4 h-4"></i> Export
+                        </button>
+                        <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-colors">
+                            <i data-lucide="plus" className="w-4 h-4"></i> Tambah Barang
+                        </button>
+                    </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+                
+                <Card className="overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-50 dark:bg-slate-800/50">
+                                <tr className="text-slate-500 text-[11px] uppercase tracking-wider">
+                                    <th className="p-4 font-bold">Produk & SKU</th>
+                                    <th className="p-4 font-bold">Kategori</th>
+                                    <th className="p-4 font-bold">Harga Modal/Jual</th>
+                                    <th className="p-4 font-bold">Stok/Gudang</th>
+                                    <th className="p-4 font-bold">Barcode</th>
+                                    <th className="p-4 font-bold">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody className="text-sm">
+                                {[
+                                    { sku: "PN-ELE-001", name: "Laptop ASUS ROG", cat: "Elektronik", cost: 15000000, price: 18500000, stock: 45, wh: "Gudang Utama", code: "7890123" },
+                                    { sku: "PN-ACC-042", name: "Mouse Logitech MX", cat: "Aksesoris", cost: 800000, price: 1250000, stock: 120, wh: "Gudang B", code: "4455667" },
+                                    { sku: "PN-FUR-099", name: "Kursi Gaming SecretLab", cat: "Furniture", cost: 5000000, price: 7200000, stock: 5, wh: "Gudang Utama", code: "1122334" },
+                                ].map((item, i) => (
+                                    <tr key={i} className="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                                        <td className="p-4">
+                                            <div className="font-bold dark:text-white">{item.name}</div>
+                                            <div className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">{item.sku}</div>
+                                        </td>
+                                        <td className="p-4">
+                                            <Badge color="blue">{item.cat}</Badge>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="text-xs text-slate-400 line-through">{formatIDR(item.cost)}</div>
+                                            <div className="font-bold text-emerald-600">{formatIDR(item.price)}</div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="dark:text-white font-medium">{item.stock} Unit</div>
+                                            <div className="text-[10px] text-slate-500">{item.wh}</div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="w-16 h-8 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-600">
+                                                <i data-lucide="barcode" className="w-6 h-6 text-slate-400"></i>
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex gap-1">
+                                                <button className="p-1.5 text-slate-400 hover:text-blue-500 transition-colors"><i data-lucide="eye" className="w-4 h-4"></i></button>
+                                                <button className="p-1.5 text-slate-400 hover:text-amber-500 transition-colors"><i data-lucide="edit-3" className="w-4 h-4"></i></button>
+                                                <button className="p-1.5 text-slate-400 hover:text-rose-500 transition-colors"><i data-lucide="trash-2" className="w-4 h-4"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+            </div>
+        );
 
-const InventoryView = ({ inventory, handleDelete }) => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">Katalog <span className="text-blue-900">Inventaris</span></h2>
-    <div className={`rounded-[3rem] ${THEME.glass} overflow-hidden shadow-2xl`}>
-      <table className="w-full text-left">
-        <thead className="bg-slate-50/50">
-          <tr>
-            <th className="p-7 text-[10px] font-black text-slate-400 uppercase">Produk</th>
-            <th className="p-7 text-[10px] font-black text-slate-400 uppercase text-center">Stok</th>
-            <th className="p-7 text-[10px] font-black text-slate-400 uppercase text-right">Aksi</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-50">
-          {inventory.map((item) => (
-            <tr key={item.id} className="hover:bg-blue-50/20 transition-all group">
-              <td className="p-7">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center mr-5 text-blue-900 font-black text-xl">{item.name?.charAt(0)}</div>
-                  <div>
-                    <p className="text-base font-black text-slate-800 tracking-tight">{item.name}</p>
-                    <p className="text-[10px] text-slate-400 font-black uppercase tracking-tighter">{item.sku}</p>
-                  </div>
+        // --- VIEW: STOK MANAGEMENT ---
+        const StockView = () => (
+            <div className="space-y-6 fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <Card className="flex items-center gap-4 cursor-pointer hover:border-blue-500 transition-all">
+                        <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600"><i data-lucide="arrow-down-left"></i></div>
+                        <div><p className="text-xs font-bold text-slate-500 uppercase">Stok Masuk</p><p className="text-xs text-slate-400">Restock Barang</p></div>
+                    </Card>
+                    <Card className="flex items-center gap-4 cursor-pointer hover:border-rose-500 transition-all">
+                        <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center text-rose-600"><i data-lucide="arrow-up-right"></i></div>
+                        <div><p className="text-xs font-bold text-slate-500 uppercase">Stok Keluar</p><p className="text-xs text-slate-400">Pengiriman Barang</p></div>
+                    </Card>
+                    <Card className="flex items-center gap-4 cursor-pointer hover:border-amber-500 transition-all">
+                        <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center text-amber-600"><i data-lucide="clipboard-check"></i></div>
+                        <div><p className="text-xs font-bold text-slate-500 uppercase">Stok Opname</p><p className="text-xs text-slate-400">Audit Fisik</p></div>
+                    </Card>
+                    <Card className="flex items-center gap-4 cursor-pointer hover:border-purple-500 transition-all">
+                        <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600"><i data-lucide="git-compare"></i></div>
+                        <div><p className="text-xs font-bold text-slate-500 uppercase">Transfer</p><p className="text-xs text-slate-400">Antar Gudang</p></div>
+                    </Card>
                 </div>
-              </td>
-              <td className="p-7 text-center font-black text-blue-900 text-lg">{item.stock}</td>
-              <td className="p-7 text-right">
-                <button onClick={() => handleDelete(item.id, item.name, 'inventory')} className="p-2.5 text-slate-400 hover:text-rose-500 transition-all"><Trash2 size={18} /></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
+                
+                <div className="flex gap-4">
+                    <Card className="flex-1">
+                        <h3 className="font-bold mb-4 dark:text-white flex items-center gap-2">
+                            <i data-lucide="history" className="w-4 h-4 text-slate-400"></i> Mutasi Barang Terbaru (FIFO)
+                        </h3>
+                        <div className="space-y-4">
+                            {[1,2,3,4].map(i => (
+                                <div key={i} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-2 h-10 rounded-full ${i % 2 === 0 ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                        <div>
+                                            <p className="text-xs font-bold dark:text-white">ASUS ROG Zephyrus G14</p>
+                                            <p className="text-[10px] text-slate-500 italic">Oleh: Admin Darmawan • Ref: #TRX-9921</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`font-black ${i % 2 === 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{i % 2 === 0 ? '+' : '-'} {i * 5}</p>
+                                        <p className="text-[10px] text-slate-400 font-mono">14:20:01</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                    <Card className="w-80 flex flex-col items-center justify-center text-center gap-4 bg-gradient-to-br from-blue-600 to-indigo-700 text-white border-none shadow-xl">
+                        <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                            <i data-lucide="scan" className="w-10 h-10"></i>
+                        </div>
+                        <div>
+                            <h4 className="font-bold">Scan Barcode</h4>
+                            <p className="text-xs text-blue-100 px-4">Gunakan kamera untuk input stok masuk/keluar otomatis secara realtime.</p>
+                        </div>
+                        <button className="px-6 py-2 bg-white text-blue-700 rounded-xl font-bold text-sm shadow-lg">Buka Kamera</button>
+                    </Card>
+                </div>
+            </div>
+        );
 
-const SalesView = ({ transactions }) => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">Arus <span className="text-blue-900">Penjualan</span></h2>
-    <div className={`rounded-[3rem] ${THEME.glass} p-10`}>
-      <table className="w-full text-left">
-        <thead>
-          <tr className="border-b border-slate-100">
-            <th className="pb-4 text-[10px] font-black text-slate-400 uppercase">Pelanggan</th>
-            <th className="pb-4 text-[10px] font-black text-slate-400 uppercase">Faktur</th>
-            <th className="pb-4 text-[10px] font-black text-slate-400 uppercase text-right">Total</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-50">
-          {transactions.map(t => (
-            <tr key={t.id}>
-              <td className="py-5 text-sm font-black text-slate-800">{t.customer}</td>
-              <td className="py-5 text-sm font-bold text-blue-900 tracking-tighter">{t.invoice}</td>
-              <td className="py-5 text-right font-black text-slate-800">Rp {Number(t.total || 0).toLocaleString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
+        // --- VIEW: FINANCE ---
+        const FinanceView = () => (
+            <div className="space-y-6 fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <Card className="bg-emerald-600 text-white border-none shadow-lg">
+                        <p className="text-xs font-bold text-emerald-100 uppercase">Pemasukan Bulan Ini</p>
+                        <h2 className="text-3xl font-black mt-2">{formatIDR(1245000000)}</h2>
+                        <div className="mt-4 flex items-center gap-2 text-xs text-emerald-200">
+                            <i data-lucide="trending-up" className="w-3 h-3"></i> +12% dari bulan lalu
+                        </div>
+                    </Card>
+                    <Card className="bg-rose-600 text-white border-none shadow-lg">
+                        <p className="text-xs font-bold text-rose-100 uppercase">Pengeluaran Bulan Ini</p>
+                        <h2 className="text-3xl font-black mt-2">{formatIDR(450200000)}</h2>
+                        <div className="mt-4 flex items-center gap-2 text-xs text-rose-200">
+                            <i data-lucide="trending-down" className="w-3 h-3"></i> -5% efisiensi operasional
+                        </div>
+                    </Card>
+                    <Card className="bg-slate-900 text-white border-none shadow-lg">
+                        <p className="text-xs font-bold text-slate-400 uppercase">Net Profit (Laba Bersih)</p>
+                        <h2 className="text-3xl font-black mt-2 text-blue-400">{formatIDR(794800000)}</h2>
+                        <div className="mt-4 flex items-center gap-2 text-xs text-slate-400">
+                            <i data-lucide="wallet" className="w-3 h-3"></i> Tersebar di 3 Rekening Bank
+                        </div>
+                    </Card>
+                </div>
 
-const FinanceView = () => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">Laporan <span className="text-blue-900">Keuangan</span></h2>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-      <div className={`p-12 rounded-[3rem] ${THEME.glass} border-l-[12px] border-emerald-500`}>
-        <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Total Pendapatan</p>
-        <h2 className="text-5xl font-black text-slate-800 tracking-tighter">Rp 0</h2>
-      </div>
-      <div className={`p-12 rounded-[3rem] ${THEME.glass} border-l-[12px] border-rose-500`}>
-        <p className="text-[10px] font-black text-slate-400 uppercase mb-2">Total Pengeluaran</p>
-        <h2 className="text-5xl font-black text-slate-800 tracking-tighter">Rp 0</h2>
-      </div>
-    </div>
-  </div>
-);
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card className="h-[350px]">
+                        <h3 className="font-bold mb-4 dark:text-white">Cash Flow Analysis</h3>
+                        <div className="h-[250px]">
+                            <CombinedChart 
+                                type="bar"
+                                labels={['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']}
+                                data={[
+                                    { label: 'Debit', data: [120, 190, 300, 500, 200, 300, 450], backgroundColor: '#10b981' },
+                                    { label: 'Kredit', data: [80, 150, 120, 200, 150, 210, 100], backgroundColor: '#f43f5e' }
+                                ]}
+                            />
+                        </div>
+                    </Card>
+                    <Card>
+                        <div className="flex justify-between mb-4">
+                            <h3 className="font-bold dark:text-white">Jurnal Transaksi Terbaru</h3>
+                            <button className="text-blue-500 text-xs font-bold">Lihat Semua</button>
+                        </div>
+                        <div className="space-y-3">
+                            {[
+                                { title: "Penjualan INV-902", category: "Sales", amount: 15000000, type: "plus" },
+                                { title: "Restock PN-012", category: "Purchase", amount: -8000000, type: "minus" },
+                                { title: "Biaya Listrik Gudang", category: "Utility", amount: -1200000, type: "minus" },
+                                { title: "Penerimaan PO-881", category: "Income", amount: 25000000, type: "plus" }
+                            ].map((tx, i) => (
+                                <div key={i} className="flex justify-between items-center p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                    <div className="flex gap-3">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${tx.type === 'plus' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}>
+                                            <i data-lucide={tx.type === 'plus' ? 'arrow-down-left' : 'arrow-up-right'} className="w-5 h-5"></i>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold dark:text-white">{tx.title}</p>
+                                            <p className="text-[10px] text-slate-500 uppercase">{tx.category}</p>
+                                        </div>
+                                    </div>
+                                    <p className={`text-sm font-black ${tx.type === 'plus' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                        {tx.type === 'plus' ? '+' : '-'} {formatIDR(Math.abs(tx.amount))}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </div>
+            </div>
+        );
 
-const ReportsView = () => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">Pusat <span className="text-blue-900">Laporan</span></h2>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {['Laporan Inventaris', 'Laporan Laba Rugi', 'Laporan CRM', 'Laporan HR', 'Log Sistem'].map((title, i) => (
-        <div key={i} className={`p-8 rounded-[2.5rem] ${THEME.glass} hover:border-blue-900 transition-all`}>
-          <FileText size={32} className="text-blue-900 mb-4" />
-          <h4 className="text-sm font-black text-slate-800 uppercase">{title}</h4>
-          <button className="mt-4 text-[10px] font-black text-blue-900 uppercase flex items-center">Download PDF <Download size={14} className="ml-2" /></button>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+        // --- VIEW: EMPLOYEES / HR ---
+        const EmployeeView = () => (
+            <div className="space-y-6 fade-in">
+                <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-bold dark:text-white">Sumber Daya Manusia</h3>
+                    <div className="flex gap-2">
+                         <button className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-bold flex items-center gap-2"><i data-lucide="clock" className="w-4 h-4"></i> Rekap Absensi</button>
+                         <button className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold flex items-center gap-2"><i data-lucide="plus" className="w-4 h-4"></i> Karyawan Baru</button>
+                    </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {[
+                        { name: "Ahmad Darmawan", pos: "Kepala Gudang", div: "Operasional", status: "Hadir", img: "AD" },
+                        { name: "Siti Aminah", pos: "Admin Keuangan", div: "Finance", status: "Hadir", img: "SA" },
+                        { name: "Budi Santoso", pos: "Staff Gudang", div: "Operasional", status: "Izin", img: "BS" },
+                        { name: "Dewi Lestari", pos: "Data Analyst", div: "IT/AI", status: "Hadir", img: "DL" },
+                    ].map((emp, i) => (
+                        <Card key={i} className="text-center group hover:border-blue-500 transition-all cursor-pointer">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-slate-200 to-slate-100 dark:from-slate-800 dark:to-slate-700 mx-auto flex items-center justify-center text-xl font-black text-slate-500 dark:text-slate-400 mb-4 group-hover:from-blue-500 group-hover:to-indigo-600 group-hover:text-white transition-all">
+                                {emp.img}
+                            </div>
+                            <h4 className="font-bold dark:text-white">{emp.name}</h4>
+                            <p className="text-[10px] text-slate-500 uppercase font-bold mt-1 tracking-widest">{emp.pos}</p>
+                            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                                <Badge color={emp.status === 'Hadir' ? 'emerald' : 'amber'}>{emp.status}</Badge>
+                                <button className="text-slate-400 hover:text-blue-500"><i data-lucide="more-horizontal" className="w-4 h-4"></i></button>
+                            </div>
+                        </Card>
+                    ))}
+                </div>
 
-const StockMutationView = () => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">Mutasi <span className="text-blue-900">Stok</span></h2>
-    <div className={`p-10 rounded-[3rem] ${THEME.glass} opacity-50`}>
-      <Activity size={48} className="text-blue-900 mb-4" />
-      <p className="text-sm font-black text-slate-800">MODUL MUTASI AKTIF</p>
-      <p className="text-xs text-slate-400 mt-2">Menunggu pergerakan barang antar gudang...</p>
-    </div>
-  </div>
-);
+                <Card>
+                    <h3 className="font-bold mb-6 dark:text-white flex items-center gap-2"><i data-lucide="lock" className="w-4 h-4"></i> Access Control & Logs</h3>
+                    <div className="space-y-3">
+                        {[
+                            { user: "Admin", action: "Mengubah harga jual PN-001", time: "10:20", ip: "192.168.1.1" },
+                            { user: "Staff Budi", action: "Login ke sistem via Mobile", time: "08:15", ip: "10.0.4.22" },
+                            { user: "Finance Siti", action: "Mencetak slip gaji Mei", time: "09:44", ip: "192.168.1.5" }
+                        ].map((log, i) => (
+                            <div key={i} className="flex justify-between items-center text-xs p-3 border-b border-slate-50 dark:border-slate-800 last:border-none">
+                                <div className="flex gap-4">
+                                    <span className="font-bold text-blue-600 dark:text-blue-400 w-24 shrink-0">{log.user}</span>
+                                    <span className="text-slate-600 dark:text-slate-300">{log.action}</span>
+                                </div>
+                                <div className="flex gap-4 text-slate-400 font-mono italic">
+                                    <span>{log.time}</span>
+                                    <span className="hidden md:inline">{log.ip}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </Card>
+            </div>
+        );
 
-const PurchaseView = () => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">Manajemen <span className="text-blue-900">Pembelian</span></h2>
-    <div className={`p-10 rounded-[3rem] ${THEME.glass} opacity-50`}>
-      <Truck size={48} className="text-blue-900 mb-4" />
-      <p className="text-sm font-black text-slate-800">MODUL PEMBELIAN AKTIF</p>
-      <p className="text-xs text-slate-400 mt-2">Daftar Purchase Order (PO) akan muncul di sini.</p>
-    </div>
-  </div>
-);
+        // --- VIEW: AI ASSISTANT ---
+        const AIView = () => (
+            <div className="h-full flex flex-col fade-in space-y-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                        <i data-lucide="bot" className="w-7 h-7"></i>
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-black dark:text-white">PoetraNuri <span className="text-blue-600">SmartAI</span></h3>
+                        <p className="text-xs text-slate-500 font-medium italic">Menganalisis 4.2k data barang untuk optimasi gudang Anda...</p>
+                    </div>
+                </div>
 
-const CRMView = () => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">Sistem <span className="text-blue-900">CRM</span></h2>
-    <div className={`p-10 rounded-[3rem] ${THEME.glass} opacity-50`}>
-      <UserPlus size={48} className="text-blue-900 mb-4" />
-      <p className="text-sm font-black text-slate-800">DATABASE PELANGGAN AKTIF</p>
-      <p className="text-xs text-slate-400 mt-2">Kelola hubungan pelanggan dan database kontak di sini.</p>
-    </div>
-  </div>
-);
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+                    <div className="lg:col-span-2 flex flex-col gap-4">
+                        <Card className="flex-1 bg-slate-900 border-none shadow-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <i data-lucide="cpu" className="w-32 h-32 text-white"></i>
+                            </div>
+                            <div className="relative h-full flex flex-col">
+                                <div className="flex-1 space-y-4 overflow-y-auto custom-scrollbar p-4 text-sm">
+                                    <div className="flex gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shrink-0"><i data-lucide="bot" className="w-4 h-4"></i></div>
+                                        <div className="bg-slate-800 text-slate-200 p-3 rounded-2xl rounded-tl-none">Halo Darmawan! Berdasarkan data 30 hari terakhir, penjualan **MacBook Pro** meningkat 25%. Saya menyarankan restock 20 unit sebelum minggu depan. Ada yang ingin ditanyakan?</div>
+                                    </div>
+                                    <div className="flex gap-3 justify-end">
+                                        <div className="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-none">Berapa potensi profit jika saya restock 20 unit?</div>
+                                        <div className="w-8 h-8 rounded-lg bg-slate-700 flex items-center justify-center text-white shrink-0 font-bold text-[10px]">DP</div>
+                                    </div>
+                                </div>
+                                <div className="mt-4 flex gap-2">
+                                    <input type="text" placeholder="Tanyakan analisis stok atau laporan keuangan..." className="flex-1 bg-slate-800 border-none rounded-xl px-4 text-white text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+                                    <button className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700"><i data-lucide="send" className="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                    <div className="space-y-4">
+                        <Card className="bg-gradient-to-br from-indigo-600 to-purple-700 text-white border-none">
+                            <h4 className="font-bold text-sm mb-3">AI Prediction Score</h4>
+                            <div className="flex items-center gap-4">
+                                <div className="text-4xl font-black">94%</div>
+                                <div className="text-[10px] text-indigo-100">Akurasi prediksi stok habis berdasarkan pola historis.</div>
+                            </div>
+                            <div className="mt-4 w-full bg-white/20 h-2 rounded-full overflow-hidden">
+                                <div className="bg-white h-full w-[94%]"></div>
+                            </div>
+                        </Card>
+                        <Card>
+                            <h4 className="font-bold text-sm mb-4 dark:text-white">Smart Automation</h4>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs dark:text-slate-300">Auto-PO ke Supplier</span>
+                                    <div className="w-10 h-5 bg-blue-600 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs dark:text-slate-300">WhatsApp Alert Stok</span>
+                                    <div className="w-10 h-5 bg-blue-600 rounded-full relative cursor-pointer"><div className="absolute right-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
+                                </div>
+                                <div className="flex items-center justify-between opacity-50">
+                                    <span className="text-xs dark:text-slate-300">Integrasi Marketplace</span>
+                                    <div className="w-10 h-5 bg-slate-400 rounded-full relative cursor-not-allowed"><div className="absolute left-1 top-1 w-3 h-3 bg-white rounded-full"></div></div>
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                </div>
+            </div>
+        );
 
-const HRView = () => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">SDM & <span className="text-blue-900">Payroll</span></h2>
-    <div className={`p-10 rounded-[3rem] ${THEME.glass} opacity-50`}>
-      <Briefcase size={48} className="text-blue-900 mb-4" />
-      <p className="text-sm font-black text-slate-800">MODUL HR AKTIF</p>
-      <p className="text-xs text-slate-400 mt-2">Manajemen karyawan, absensi, dan penggajian.</p>
-    </div>
-  </div>
-);
+        // --- MAIN APP COMPONENT ---
+        function App() {
+            const [isDarkMode, setIsDarkMode] = useState(false);
+            const [sidebarOpen, setSidebarOpen] = useState(true);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [user, setUser] = useState(null);
 
-const SettingsView = () => (
-  <div className="animate-in fade-in duration-700">
-    <h2 className="text-4xl font-black text-slate-900 italic uppercase mb-10">Pengaturan <span className="text-blue-900">Sistem</span></h2>
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className={`p-8 rounded-[2.5rem] ${THEME.glass}`}>
-        <h4 className="font-black text-slate-800 mb-4 uppercase">Profil Perusahaan</h4>
-        <FormInput label="Nama Perusahaan" readOnly value="POETRANURI.COM" />
-        <FormInput label="Alamat Cloud" readOnly value="global.poetranuri.cloud" />
-      </div>
-      <div className={`p-8 rounded-[2.5rem] ${THEME.glass}`}>
-        <h4 className="font-black text-slate-800 mb-4 uppercase">Keamanan</h4>
-        <div className="flex items-center space-x-2 text-emerald-500 font-bold text-xs"><ShieldCheck size={16} /> <span>SSL ENCRYPTION ACTIVE</span></div>
-      </div>
-    </div>
-  </div>
-);
+            useEffect(() => {
+                if (isDarkMode) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+                lucide.createIcons();
+            }, [isDarkMode, isLoggedIn, activeTab]);
 
-const StatCard = ({ title, value, icon: Icon, trend, color }) => (
-  <div className={`p-7 rounded-[2.5rem] ${THEME.glass} group hover:-translate-y-1 transition-all`}>
-    <div className="flex justify-between items-start mb-4">
-      <div className={`p-4 rounded-2xl ${color} text-white shadow-lg`}><Icon size={24} /></div>
-      <div className="text-emerald-500 text-[10px] font-black">+{trend}%</div>
-    </div>
-    <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">{title}</p>
-    <h3 className="text-3xl font-black mt-1 text-slate-800 tracking-tight">{value}</h3>
-  </div>
-);
+            const handleLogin = (e) => {
+                e.preventDefault();
+                setIsLoggedIn(true);
+                setUser({ name: 'Darmawan Poetra', role: 'Owner' });
+            };
 
-// --- MODAL FORM ---
-const ModalForm = ({ type, onClose, onSubmit }) => {
-  const [formData, setFormData] = useState({
-    name: '', sku: '', stock: 0, price: 0,
-    invoice: `INV/${new Date().getFullYear()}/${Math.floor(Math.random()*10000)}`,
-    customer: '', total: 0
-  });
+            const renderContent = () => {
+                switch(activeTab) {
+                    case 'master': return <MasterDataView />;
+                    case 'stock': return <StockView />;
+                    case 'finance': return <FinanceView />;
+                    case 'employees': return <EmployeeView />;
+                    case 'ai': return <AIView />;
+                    default: return <DashboardView />;
+                }
+            };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-blue-950/20 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white rounded-[3rem] w-full max-w-xl p-10 shadow-2xl relative overflow-hidden">
-        <div className="flex justify-between items-center mb-8 relative z-10">
-          <h3 className="text-2xl font-black text-blue-900 italic uppercase">Tambah <span className="text-slate-800">{type === 'inventory' ? 'Produk' : 'Transaksi'}</span></h3>
-          <button onClick={onClose} className="p-2 text-slate-400"><X size={24} /></button>
-        </div>
+            if (!isLoggedIn) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-4 bg-slate-50 dark:bg-slate-950">
+                        <div className="w-full max-w-md fade-in">
+                            <div className="text-center mb-10">
+                                <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-blue-600 mb-6 shadow-2xl shadow-blue-600/30">
+                                    <i data-lucide="box" className="text-white w-10 h-10"></i>
+                                </div>
+                                <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">PoetraNuri<span className="text-blue-600">.erp</span></h1>
+                                <p className="text-slate-500 dark:text-slate-400 mt-2 font-medium">Enterprise Warehouse AI Management</p>
+                            </div>
+                            <Card className="shadow-2xl border-none p-8">
+                                <form onSubmit={handleLogin} className="space-y-5">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-black text-slate-500 uppercase ml-1">E-mail Address</label>
+                                        <input type="email" placeholder="admin@poetranuri.com" className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" required />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-black text-slate-500 uppercase ml-1">Password</label>
+                                        <input type="password" placeholder="••••••••" className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 dark:bg-slate-900 dark:text-white outline-none focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" required />
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs px-1">
+                                        <label className="flex items-center gap-2 cursor-pointer text-slate-500"><input type="checkbox" className="rounded" /> Ingat saya</label>
+                                        <a href="#" className="text-blue-600 font-bold">Lupa Password?</a>
+                                    </div>
+                                    <button className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black transition-all shadow-xl shadow-blue-600/20 active:scale-[0.98]">MASUK KE DASHBOARD</button>
+                                    <div className="relative flex items-center py-2">
+                                        <div className="flex-grow border-t border-slate-100 dark:border-slate-800"></div>
+                                        <span className="flex-shrink mx-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Atau</span>
+                                        <div className="flex-grow border-t border-slate-100 dark:border-slate-800"></div>
+                                    </div>
+                                    <button type="button" className="w-full py-3.5 border border-slate-200 dark:border-slate-800 rounded-2xl font-bold text-slate-700 dark:text-slate-300 flex items-center justify-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all">
+                                        <img src="https://www.google.com/favicon.ico" className="w-4 h-4" /> Lanjutkan dengan Google
+                                    </button>
+                                </form>
+                            </Card>
+                        </div>
+                    </div>
+                );
+            }
 
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }} className="space-y-6 relative z-10">
-          {type === 'inventory' ? (
-            <>
-              <FormInput label="Nama Produk" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-              <div className="grid grid-cols-2 gap-6">
-                <FormInput label="SKU" required value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} />
-                <FormInput label="Stok" type="number" required value={formData.stock} onChange={e => setFormData({...formData, stock: Number(e.target.value)})} />
-              </div>
-              <FormInput label="Harga (Rp)" type="number" required value={formData.price} onChange={e => setFormData({...formData, price: Number(e.target.value)})} />
-            </>
-          ) : (
-            <>
-              <FormInput label="Nama Pelanggan" required value={formData.customer} onChange={e => setFormData({...formData, customer: e.target.value})} />
-              <FormInput label="Total Pembayaran (Rp)" type="number" required value={formData.total} onChange={e => setFormData({...formData, total: Number(e.target.value)})} />
-            </>
-          )}
-          <button type="submit" className="w-full py-5 bg-blue-900 text-white rounded-2xl font-black uppercase tracking-[0.3em] hover:bg-blue-800 transition-all">SINKRON DATA</button>
-        </form>
-      </div>
-    </div>
-  );
-};
+            return (
+                <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+                    {/* Sidebar */}
+                    <aside className={`${sidebarOpen ? 'w-72' : 'w-24'} bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-50 fixed md:relative h-full`}>
+                        <div className="p-8 flex items-center gap-4 overflow-hidden">
+                            <div className="min-w-[48px] h-12 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                <i data-lucide="box" className="text-white w-6 h-6"></i>
+                            </div>
+                            {sidebarOpen && <span className="font-black text-2xl dark:text-white tracking-tighter shrink-0">PoetraNuri<span className="text-blue-600">.</span></span>}
+                        </div>
+                        
+                        <nav className="flex-1 px-4 space-y-2 overflow-y-auto custom-scrollbar pb-8">
+                            {[
+                                { id: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
+                                { id: 'master', icon: 'database', label: 'Master Data' },
+                                { id: 'stock', icon: 'package-2', label: 'Manajemen Stok' },
+                                { id: 'purchase', icon: 'truck', label: 'Pembelian' },
+                                { id: 'sales', icon: 'shopping-cart', label: 'Penjualan' },
+                                { id: 'finance', icon: 'landmark', label: 'Keuangan' },
+                                { id: 'employees', icon: 'users', label: 'Karyawan & HR' },
+                                { id: 'reports', icon: 'file-text', label: 'Laporan' },
+                                { id: 'ai', icon: 'bot', label: 'AI Assistant', premium: true },
+                            ].map(item => (
+                                <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all group relative ${activeTab === item.id ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/30' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
+                                    <i data-lucide={item.icon} className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : 'group-hover:text-blue-500'}`}></i>
+                                    {sidebarOpen && <span className="font-bold text-sm">{item.label}</span>}
+                                    {item.premium && sidebarOpen && <span className="ml-auto text-[8px] bg-amber-400 text-amber-900 px-1.5 py-0.5 rounded-md font-black uppercase tracking-tighter">AI</span>}
+                                </button>
+                            ))}
+                        </nav>
+
+                        <div className="p-6 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                            {sidebarOpen && (
+                                <div className="bg-slate-100 dark:bg-slate-800/50 p-4 rounded-2xl mb-4">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 text-center">Storage Usage</p>
+                                    <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full mb-1"><div className="bg-blue-500 h-full w-[65%]"></div></div>
+                                    <p className="text-[9px] text-slate-500 text-center font-bold">12.5GB / 20GB Used</p>
+                                </div>
+                            )}
+                            <button onClick={() => setIsLoggedIn(false)} className="w-full flex items-center gap-3 px-4 py-3.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all font-bold group">
+                                <i data-lucide="log-out" className="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i>
+                                {sidebarOpen && <span>Keluar</span>}
+                            </button>
+                        </div>
+                    </aside>
+
+                    {/* Main Content Area */}
+                    <main className="flex-1 flex flex-col h-screen overflow-hidden">
+                        <header className="h-20 glass border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-40">
+                            <div className="flex items-center gap-6">
+                                <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-blue-600 hover:text-white rounded-xl transition-all dark:text-white">
+                                    <i data-lucide={sidebarOpen ? "chevrons-left" : "chevrons-right"} className="w-5 h-5"></i>
+                                </button>
+                                <div className="hidden md:block">
+                                    <h2 className="text-xl font-black capitalize dark:text-white tracking-tight">{activeTab.replace(/([A-Z])/g, ' $1').trim()}</h2>
+                                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Poetranuri Logistics • {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                                <div className="relative mr-4 hidden lg:block">
+                                    <button className="p-2.5 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-xl relative group">
+                                        <i data-lucide="bell" className="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+                                        <span className="absolute top-0 right-0 w-4 h-4 bg-rose-500 border-2 border-white dark:border-slate-900 rounded-full text-[8px] text-white flex items-center justify-center font-black">5</span>
+                                    </button>
+                                </div>
+                                <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                                    {isDarkMode ? <i data-lucide="sun" className="w-5 h-5"></i> : <i data-lucide="moon" className="w-5 h-5"></i>}
+                                </button>
+                                <div className="h-10 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
+                                <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-2xl group cursor-pointer hover:bg-blue-600 transition-all">
+                                    <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-[10px] text-white font-black group-hover:bg-white group-hover:text-blue-600 transition-colors">DP</div>
+                                    <div className="hidden md:block text-left">
+                                        <p className="text-xs font-black dark:text-white group-hover:text-white leading-none">{user?.name}</p>
+                                        <p className="text-[10px] text-slate-500 group-hover:text-blue-100 uppercase tracking-tighter">{user?.role}</p>
+                                    </div>
+                                    <i data-lucide="chevron-down" className="w-3 h-3 text-slate-400 group-hover:text-white transition-colors"></i>
+                                </div>
+                            </div>
+                        </header>
+
+                        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-slate-50/50 dark:bg-slate-950/50">
+                            {renderContent()}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
