@@ -894,5 +894,401 @@
             lucide.createIcons();
         };
     </script>
+    <!-- ========================= -->
+<!-- FULL FITUR EDIT & HAPUS -->
+<!-- TAMBAHKAN DI DALAM <script> -->
+<!-- ========================= -->
+
+<script>
+
+    // ===============================
+    // DELETE ITEM MODERN
+    // ===============================
+    function deleteItem(type, id) {
+
+        const confirmDelete = confirm('Yakin ingin menghapus data ini?');
+
+        if (!confirmDelete) return;
+
+        // =========================
+        // HAPUS SALES + KEMBALIKAN STOK
+        // =========================
+        if (type === 'sales') {
+
+            const sale = db.sales.find(x => x.id == id);
+
+            if (sale) {
+
+                // KEMBALIKAN STOK
+                if (sale.cartItems) {
+
+                    sale.cartItems.forEach(item => {
+
+                        const product = db.products.find(p => p.id == item.id);
+
+                        if (product) {
+                            product.stock += item.qty;
+                        }
+
+                    });
+
+                }
+
+                // HAPUS DATA KEUANGAN TERKAIT
+                db.finance = db.finance.filter(
+                    f => f.invoiceRef !== sale.invoice
+                );
+
+            }
+
+        }
+
+        // =========================
+        // DELETE DATA
+        // =========================
+        db[type] = db[type].filter(x => x.id != id);
+
+        // =========================
+        // RENDER ULANG
+        // =========================
+        if (type === 'products') renderProducts();
+        if (type === 'sales') renderSalesHistory();
+        if (type === 'suppliers') renderSuppliers();
+        if (type === 'customers') renderCustomers();
+        if (type === 'finance') renderFinance();
+
+        updateDashboard();
+
+        showToast('Data berhasil dihapus');
+
+    }
+
+
+    // ===============================
+    // EDIT ITEM
+    // ===============================
+    function editItem(type, id) {
+
+        const item = db[type].find(x => x.id == id);
+
+        // =========================
+        // PRODUCTS
+        // =========================
+        if (type === 'products') {
+
+            document.getElementById('modal-product-title').innerText = 'Edit Produk';
+
+            document.getElementById('p-id').value = item.id;
+            document.getElementById('p-name').value = item.name;
+            document.getElementById('p-sku').value = item.sku;
+            document.getElementById('p-price').value = item.price;
+            document.getElementById('p-stock').value = item.stock;
+
+            openModal('modal-product');
+
+        }
+
+        // =========================
+        // SUPPLIERS
+        // =========================
+        else if (type === 'suppliers') {
+
+            document.getElementById('modal-supplier-title').innerText = 'Edit Supplier';
+
+            document.getElementById('s-id').value = item.id;
+            document.getElementById('s-name').value = item.name;
+            document.getElementById('s-phone').value = item.phone;
+            document.getElementById('s-addr').value = item.addr;
+
+            openModal('modal-supplier');
+
+        }
+
+        // =========================
+        // CUSTOMERS
+        // =========================
+        else if (type === 'customers') {
+
+            document.getElementById('modal-customer-title').innerText = 'Edit Customer';
+
+            document.getElementById('c-id').value = item.id;
+            document.getElementById('c-name').value = item.name;
+            document.getElementById('c-contact').value = item.contact;
+            document.getElementById('c-points').value = item.points;
+
+            openModal('modal-customer');
+
+        }
+
+    }
+
+
+    // ===============================
+    // CLOSE MODAL + RESET
+    // ===============================
+    function closeModal(id) {
+
+        document.getElementById(id).classList.add('hidden');
+
+        const inputs = document.getElementById(id).querySelectorAll('input');
+
+        inputs.forEach(i => {
+
+            if (i.type === 'hidden') {
+                i.value = '';
+            } else {
+                i.value = '';
+            }
+
+        });
+
+        const selects = document.getElementById(id).querySelectorAll('select');
+
+        selects.forEach(s => s.selectedIndex = 0);
+
+    }
+
+
+    // ===============================
+    // POS CART
+    // ===============================
+    function renderCart() {
+
+        const list = document.getElementById('pos-cart');
+
+        let total = 0;
+
+        if (cart.length === 0) {
+
+            list.innerHTML = `
+                <p class="text-center py-10 text-slate-300 text-xs italic">
+                    Belum ada item dipilih
+                </p>
+            `;
+
+        } else {
+
+            list.innerHTML = cart.map(item => {
+
+                total += (item.price * item.qty);
+
+                return `
+                <div class="bg-slate-50 p-3 rounded-xl flex justify-between items-center animate-slide-in">
+
+                    <div>
+                        <p class="text-[11px] font-bold">
+                            ${item.name}
+                        </p>
+
+                        <p class="text-[10px] text-slate-400">
+                            ${item.qty}x Rp ${item.price.toLocaleString()}
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+
+                        <button onclick="decreaseQty(${item.id})"
+                            class="w-6 h-6 rounded bg-slate-200 hover:bg-slate-300 font-bold">
+                            -
+                        </button>
+
+                        <button onclick="increaseQty(${item.id})"
+                            class="w-6 h-6 rounded bg-slate-900 text-white font-bold">
+                            +
+                        </button>
+
+                        <button onclick="removeFromCart(${item.id})"
+                            class="text-red-400 hover:text-red-600">
+
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+                `;
+
+            }).join('');
+
+        }
+
+        document.getElementById('pos-total').innerText =
+            `Rp ${total.toLocaleString()}`;
+
+        lucide.createIcons();
+
+    }
+
+
+    // ===============================
+    // TAMBAH QTY
+    // ===============================
+    function increaseQty(id) {
+
+        const item = cart.find(x => x.id === id);
+
+        const product = db.products.find(x => x.id === id);
+
+        if (item.qty < product.stock) {
+
+            item.qty++;
+
+        } else {
+
+            showToast('Stok tidak cukup');
+
+        }
+
+        renderCart();
+
+    }
+
+
+    // ===============================
+    // KURANGI QTY
+    // ===============================
+    function decreaseQty(id) {
+
+        const item = cart.find(x => x.id === id);
+
+        if (item.qty > 1) {
+
+            item.qty--;
+
+        } else {
+
+            cart = cart.filter(x => x.id !== id);
+
+        }
+
+        renderCart();
+
+    }
+
+
+    // ===============================
+    // REMOVE FROM CART
+    // ===============================
+    function removeFromCart(id) {
+
+        cart = cart.filter(x => x.id !== id);
+
+        renderCart();
+
+    }
+
+
+    // ===============================
+    // CHECKOUT
+    // ===============================
+    function checkout() {
+
+        if (cart.length === 0)
+            return alert('Keranjang masih kosong!');
+
+        const now = new Date();
+
+        const invoiceNo =
+            'INV-' + now.getTime().toString().slice(-6);
+
+        const totalAmount =
+            cart.reduce((a, b) => a + (b.price * b.qty), 0);
+
+        const itemsCount =
+            cart.reduce((a, b) => a + b.qty, 0);
+
+        // =========================
+        // UPDATE STOCK
+        // =========================
+        cart.forEach(item => {
+
+            const prod = db.products.find(
+                p => p.id === item.id
+            );
+
+            if (prod) {
+
+                prod.stock -= item.qty;
+
+            }
+
+        });
+
+        // =========================
+        // SAVE SALES
+        // =========================
+        const newSale = {
+
+            id: Date.now(),
+
+            rawDate: now,
+
+            date: now.toLocaleString('id-ID'),
+
+            invoice: invoiceNo,
+
+            itemsCount: itemsCount,
+
+            platform: currentPlatform,
+
+            total: totalAmount,
+
+            // SAVE CART ITEMS
+            cartItems: cart.map(item => ({
+                id: item.id,
+                qty: item.qty
+            }))
+
+        };
+
+        db.sales.unshift(newSale);
+
+        // =========================
+        // SAVE FINANCE
+        // =========================
+        db.finance.unshift({
+
+            id: Date.now() + 1,
+
+            rawDate: now,
+
+            date: now.toLocaleString('id-ID'),
+
+            category: 'Penjualan',
+
+            desc:
+                `Penjualan ${currentPlatform.toUpperCase()} ${invoiceNo}`,
+
+            amount: totalAmount,
+
+            type: 'IN',
+
+            invoiceRef: invoiceNo
+
+        });
+
+        // =========================
+        // RESET CART
+        // =========================
+        cart = [];
+
+        renderCart();
+
+        renderPOS('all');
+
+        renderSalesHistory();
+
+        renderFinance();
+
+        updateDashboard();
+
+        showToast(
+            `Checkout ${currentPlatform} berhasil`
+        );
+
+    }
+
+</script>
 </body>
 </html>
